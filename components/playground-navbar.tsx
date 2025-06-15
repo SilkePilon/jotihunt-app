@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import { ModeToggle } from "@/components/mode-toggle"
-import { PresetActions } from "@/components/preset-actions"
 import { PresetSave } from "@/components/preset-save"
 import { PresetSelector } from "@/components/preset-selector"
 import { PresetShare } from "@/components/preset-share"
 import { CodeViewer } from "@/components/code-viewer"
 import { GitHubStarsButton } from "@/components/animate-ui/buttons/github-stars"
+import { AccountButton } from "@/components/account-button"
 import { Preset } from "@/app/data/presets"
 
 interface PlaygroundNavbarProps {
@@ -37,9 +37,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             </svg>
                         </div>
                         <h1 className="text-base font-semibold">Playground</h1>
-                    </div>
-
-                    <div className="flex items-center space-x-1.5 flex-shrink-0">                        {showGitHubStars && (
+                    </div>                    <div className="flex items-center space-x-1.5 flex-shrink-0">                        {showGitHubStars && (
                         <GitHubStarsButton
                             username="animate-ui"
                             repo="animate-ui"
@@ -55,8 +53,11 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             <CodeViewer />
                             <PresetShare />
                         </div>
-                        <PresetActions />
                         <ModeToggle />
+                        <div className="flex items-center px-3">
+                            <div className="w-1 h-1 bg-border rounded-full"></div>
+                        </div>
+                        <AccountButton />
                     </div>
                 </div>
             </div>
