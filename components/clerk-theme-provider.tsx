@@ -30,40 +30,86 @@ export function ClerkThemeProvider({ children }: ClerkThemeProviderProps) {
       </ClerkProvider>
     )
   }
-
   // Use resolvedTheme which gives the actual theme being used
   const isDark = resolvedTheme === "dark"
+
   return (
-    <ClerkProvider
-      appearance={{
+    <ClerkProvider      appearance={{
         baseTheme: isDark ? dark : undefined,
         variables: {
-          colorPrimary: isDark ? "#ffffff" : "#000000",
-          colorBackground: isDark ? "#020817" : "#ffffff",
-          colorText: isDark ? "#f8fafc" : "#020817",
-          colorInputBackground: isDark ? "#020817" : "#ffffff",
-          colorInputText: isDark ? "#f8fafc" : "#020817",
-          colorNeutral: isDark ? "#64748b" : "#64748b",
-          borderRadius: "0.5rem",
+          // Primary colors - using exact values from your design system
+          colorPrimary: isDark ? "#ebebeb" : "#353535", // primary
+          colorText: isDark ? "#fbfbfb" : "#252525", // foreground  
+          colorTextSecondary: isDark ? "#b5b5b5" : "#8e8e8e", // muted-foreground
+          colorTextOnPrimaryBackground: isDark ? "#353535" : "#fbfbfb", // primary-foreground
+          
+          // Background colors
+          colorBackground: isDark ? "#252525" : "#ffffff", // background
+          colorInputBackground: isDark ? "#444444" : "#f7f7f7", // muted/input
+          colorInputText: isDark ? "#fbfbfb" : "#252525", // foreground
+          
+          // State colors
+          colorDanger: isDark ? "#e74c3c" : "#dc2626", // destructive
+          colorSuccess: "#22c55e", // success green
+          colorWarning: "#f59e0b", // warning amber
+          colorNeutral: isDark ? "#b5b5b5" : "#8e8e8e", // muted-foreground
+          
+          // UI properties
+          borderRadius: "0.625rem", // matches your --radius exactly
+          fontFamily: "var(--font-geist-sans)",
+          fontSize: "0.875rem",
         },
         elements: {
+          // Card styling - using your exact card colors
           card: isDark 
-            ? "bg-slate-950 text-slate-50 border border-slate-800" 
-            : "bg-white text-slate-950 border border-slate-200",
-          headerTitle: isDark ? "text-slate-50" : "text-slate-950",
-          headerSubtitle: isDark ? "text-slate-400" : "text-slate-600",
+            ? "bg-[#353535] text-[#fbfbfb] border border-[rgba(255,255,255,0.1)]" 
+            : "bg-white text-[#252525] border border-[#ebebeb]",
+          
+          // Header styling
+          headerTitle: isDark ? "text-[#fbfbfb]" : "text-[#252525]",
+          headerSubtitle: isDark ? "text-[#b5b5b5]" : "text-[#8e8e8e]",
+          
+          // Button styling - matching your button variants
           socialButtonsBlockButton: isDark 
-            ? "border border-slate-700 bg-slate-950 text-slate-50 hover:bg-slate-800" 
-            : "border border-slate-200 bg-white text-slate-950 hover:bg-slate-50",
+            ? "border border-[rgba(255,255,255,0.15)] bg-[#252525] text-[#fbfbfb] hover:bg-[#444444] transition-colors" 
+            : "border border-[#ebebeb] bg-white text-[#252525] hover:bg-[#f7f7f7] transition-colors",
+          
           formButtonPrimary: isDark 
-            ? "bg-slate-50 text-slate-950 hover:bg-slate-200" 
-            : "bg-slate-950 text-slate-50 hover:bg-slate-800",
+            ? "bg-[#ebebeb] text-[#353535] hover:bg-[#d4d4d4] transition-colors" 
+            : "bg-[#353535] text-[#fbfbfb] hover:bg-[#252525] transition-colors",
+          
+          // Input styling - matching your input styles
           formFieldInput: isDark 
-            ? "border border-slate-700 bg-slate-950 text-slate-50" 
-            : "border border-slate-200 bg-white text-slate-950",
+            ? "border border-[rgba(255,255,255,0.15)] bg-[#252525] text-[#fbfbfb] focus:border-[rgba(255,255,255,0.3)]" 
+            : "border border-[#ebebeb] bg-white text-[#252525] focus:border-[#8e8e8e]",
+          
+          // Link styling
           footerActionLink: isDark 
-            ? "text-slate-50 hover:text-slate-200" 
-            : "text-slate-950 hover:text-slate-700",
+            ? "text-[#ebebeb] hover:text-[#fbfbfb] transition-colors" 
+            : "text-[#353535] hover:text-[#252525] transition-colors",
+          
+          // Modal/popover styling - using your popover colors
+          modalContent: isDark 
+            ? "bg-[#353535] border border-[rgba(255,255,255,0.1)]" 
+            : "bg-white border border-[#ebebeb]",
+          
+          // Avatar styling
+          avatarBox: isDark 
+            ? "bg-[#444444]" 
+            : "bg-[#f7f7f7]",
+            
+          // Form field labels
+          formFieldLabel: isDark ? "text-[#fbfbfb]" : "text-[#252525]",
+          
+          // Form field hints/descriptions
+          formFieldHintText: isDark ? "text-[#b5b5b5]" : "text-[#8e8e8e]",
+          
+          // Error messages
+          formFieldErrorText: isDark ? "text-[#e74c3c]" : "text-[#dc2626]",
+          
+          // Dividers
+          dividerLine: isDark ? "bg-[rgba(255,255,255,0.1)]" : "bg-[#ebebeb]",
+          dividerText: isDark ? "text-[#b5b5b5]" : "text-[#8e8e8e]",
         }
       }}
     >
