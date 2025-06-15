@@ -9,22 +9,55 @@ import { Button } from "@/components/ui/button"
 export function ModeToggle() {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
+  const buttonRef = React.useRef<HTMLButtonElement>(null)
 
   // Only show after component has mounted to avoid hydration mismatch
   React.useEffect(() => {
     setMounted(true)
   }, [])
 
-  const toggleTheme = () => {
-    if (theme === "dark") {
-      setTheme("light")
-    } else if (theme === "light") {
-      setTheme("system")
-    } else {
-      setTheme("dark")
-    }
-  }
+  const toggleTheme = (event: React.MouseEvent) => {
+    const newTheme = theme === "dark" ? "light" : theme === "light" ? "system" : "dark"
 
+    // Check if browser supports View Transitions API
+    if (!document.startViewTransition || !buttonRef.current) {
+      setTheme(newTheme)
+      return
+    }
+
+    // Get button position for circular reveal animation
+    const rect = buttonRef.current.getBoundingClientRect()
+    const x = rect.left + rect.width / 2
+    const y = rect.top + rect.height / 2
+
+    // Calculate radius to cover entire viewport
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    )
+
+    // Start view transition with circular reveal
+    const transition = document.startViewTransition(() => {
+      setTheme(newTheme)
+    })
+
+    // Wait for pseudo-elements to be ready, then animate
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`
+      ]
+
+      document.documentElement.animate(
+        { clipPath },
+        {
+          duration: 500,
+          easing: "ease-in-out",
+          pseudoElement: "::view-transition-new(root)"
+        }
+      )
+    })
+  }
   // Show default dark icon during SSR and before hydration
   if (!mounted) {
     return (
@@ -38,10 +71,9 @@ export function ModeToggle() {
         <span className="sr-only">Toggle theme</span>
       </Button>
     )
-  }
-
-  return (
+  } return (
     <Button
+      ref={buttonRef}
       variant="outline"
       size="icon"
       onClick={toggleTheme}
