@@ -4,9 +4,10 @@ import * as React from 'react';
 import {
   SVGMotionProps,
   useAnimation,
-  type AnimationControls,
   type Variants,
 } from 'motion/react';
+
+type AnimationControls = ReturnType<typeof useAnimation>;
 
 import { cn } from '@/lib/utils';
 
