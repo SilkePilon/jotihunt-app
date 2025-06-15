@@ -32,9 +32,11 @@ export function CustomSignIn({ open, onOpenChange }: CustomSignInProps) {
                 strategy: provider,
                 redirectUrl: "/",
                 redirectUrlComplete: "/",
-            })
-        } catch (err: any) {
-            setError(err.errors?.[0]?.message || `${provider === "oauth_github" ? "GitHub" : "Google"} sign-in failed`)
+            })        } catch (err: unknown) {
+            const errorMessage = err && typeof err === 'object' && 'errors' in err && Array.isArray(err.errors) && err.errors[0] && typeof err.errors[0] === 'object' && 'message' in err.errors[0] 
+                ? err.errors[0].message as string
+                : `${provider === "oauth_github" ? "GitHub" : "Google"} sign-in failed`
+            setError(errorMessage)
             setIsLoading(null)
         }
     }

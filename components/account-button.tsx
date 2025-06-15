@@ -6,14 +6,11 @@ import { Button } from "@/components/ui/button"
 import {
     SignedIn,
     SignedOut,
-    useUser,
 } from "@clerk/nextjs"
-import Image from "next/image"
 import { CustomSignIn } from "./custom-sign-in-oauth"
 import { ProfileSettingsPopover } from "./profile-settings-popover"
 
 export function AccountButton() {
-    const { user } = useUser()
     const [showSignIn, setShowSignIn] = useState(false)
 
     return (
