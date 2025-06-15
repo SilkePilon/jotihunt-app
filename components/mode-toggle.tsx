@@ -15,10 +15,9 @@ export function ModeToggle() {
   React.useEffect(() => {
     setMounted(true)
   }, [])
-
-  const toggleTheme = (event: React.MouseEvent) => {
+  const toggleTheme = () => {
     const newTheme = theme === "dark" ? "light" : theme === "light" ? "system" : "dark"
-
+    
     // Check if browser supports View Transitions API
     if (!document.startViewTransition || !buttonRef.current) {
       setTheme(newTheme)
