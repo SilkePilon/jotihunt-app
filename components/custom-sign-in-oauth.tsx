@@ -46,7 +46,7 @@ export function CustomSignIn({ open, onOpenChange }: CustomSignInProps) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Welcome to Playground</DialogTitle>
+                    <DialogTitle>Welcome to mcp.silkepilon.dev</DialogTitle>
                     <DialogDescription>
                         Sign in with your preferred account to get started.
                     </DialogDescription>
