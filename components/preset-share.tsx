@@ -180,10 +180,8 @@ export function PresetShare() {
                   delay={2500}
                   className="h-8 w-8 flex-shrink-0"
                 />
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Click "Add to Cursor" to install directly, or copy the deeplink to share with others.
+              </div>              <p className="text-xs text-muted-foreground">
+                Click &quot;Add to Cursor&quot; to install directly, or copy the deeplink to share with others.
               </p>
             </div>
           </div>

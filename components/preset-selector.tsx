@@ -1,14 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { Check, ChevronsUpDown, Search, ExternalLink, Grid3X3, Github } from "lucide-react"
 import { MCP } from '@lobehub/icons';
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Popover,
   PopoverContent,
@@ -19,15 +16,14 @@ import { Preset } from "@/app/data/presets"
 
 interface PresetSelectorProps {
   presets: Preset[]
-  [key: string]: any // Allow any additional props for compatibility
+  className?: string
 }
 
-export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
+export function PresetSelector({ presets }: PresetSelectorProps) {
   const [selectedPreset, setSelectedPreset] = React.useState<Preset>()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [visibleCount, setVisibleCount] = React.useState(6)
   const [isOpen, setIsOpen] = React.useState(false)
-  const router = useRouter()
 
   // Filter presets based on search query
   const filteredPresets = React.useMemo(() => {

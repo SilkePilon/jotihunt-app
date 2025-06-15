@@ -19,10 +19,10 @@ import { Preset } from "@/app/data/presets"
 
 interface PresetSelectorProps {
   presets: Preset[]
-  [key: string]: any // Allow any additional props for compatibility
+  className?: string
 }
 
-export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
+export function PresetSelector({ presets }: PresetSelectorProps) {
   const [selectedPreset, setSelectedPreset] = React.useState<Preset>()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [visibleCount, setVisibleCount] = React.useState(6)
