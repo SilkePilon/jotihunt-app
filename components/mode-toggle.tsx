@@ -49,20 +49,20 @@ export function ModeToggle() {
     >
       {/* Dark mode icon */}
       <Moon className={`h-[1.2rem] w-[1.2rem] absolute transition-all duration-300 ease-in-out ${theme === "dark"
-          ? "scale-100 rotate-0 opacity-100"
-          : "scale-0 rotate-90 opacity-0"
+        ? "scale-100 rotate-0 opacity-100"
+        : "scale-0 rotate-90 opacity-0"
         }`} />
 
       {/* Light mode icon */}
       <Sun className={`h-[1.2rem] w-[1.2rem] absolute transition-all duration-300 ease-in-out ${theme === "light"
-          ? "scale-100 rotate-0 opacity-100"
-          : "scale-0 -rotate-90 opacity-0"
+        ? "scale-100 rotate-0 opacity-100"
+        : "scale-0 -rotate-90 opacity-0"
         }`} />
 
       {/* System mode icon */}
       <Monitor className={`h-[1.2rem] w-[1.2rem] absolute transition-all duration-300 ease-in-out ${theme === "system"
-          ? "scale-100 rotate-0 opacity-100"
-          : "scale-0 rotate-180 opacity-0"
+        ? "scale-100 rotate-0 opacity-100"
+        : "scale-0 rotate-180 opacity-0"
         }`} />
 
       <span className="sr-only">Toggle theme</span>
