@@ -7,8 +7,6 @@ import { Check, ChevronsUpDown, Search, ExternalLink, Grid3X3, BookOpen, Github 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Popover,
   PopoverContent,
@@ -19,10 +17,10 @@ import { Preset } from "@/app/data/presets"
 
 interface PresetSelectorProps {
   presets: Preset[]
-  [key: string]: any // Allow any additional props for compatibility
+  className?: string
 }
 
-export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
+export function PresetSelector({ presets }: PresetSelectorProps) {
   const [selectedPreset, setSelectedPreset] = React.useState<Preset>()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [visibleCount, setVisibleCount] = React.useState(6)
@@ -109,8 +107,8 @@ export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
                     className={cn(
                       "group relative rounded-lg border bg-card p-3 cursor-pointer transition-all duration-200",
                       "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
-                      selectedPreset?.id === preset.id 
-                        ? "border-primary bg-primary/5 shadow-sm" 
+                      selectedPreset?.id === preset.id
+                        ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border hover:bg-accent/5"
                     )}
                     onClick={() => handlePresetSelect(preset)}
@@ -121,7 +119,7 @@ export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
                         <Check className="h-2 w-2 text-primary-foreground" />
                       </div>
                     )}
-                    
+
                     {/* Content */}
                     <div className="space-y-2">
                       {/* Header row */}
@@ -135,7 +133,7 @@ export function PresetSelector({ presets, ...props }: PresetSelectorProps) {
                           </h4>
                         </div>
                       </div>
-                      
+
                       {/* Category and description */}
                       <div className="space-y-1.5">
                         <div className="inline-flex">

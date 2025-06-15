@@ -9,9 +9,6 @@ import { cn } from "@/lib/utils"
 interface GitHubStarsButtonProps {
     username: string
     repo: string
-    inViewOnce?: boolean
-    inViewMargin?: string
-    inView?: boolean
     formatted?: boolean
     transition?: Transition
     className?: string
@@ -22,9 +19,6 @@ interface GitHubStarsButtonProps {
 export function GitHubStarsButton({
     username,
     repo,
-    inViewOnce = true,
-    inViewMargin = "0px",
-    inView = false,
     formatted = false,
     transition = { stiffness: 90, damping: 50 },
     className,

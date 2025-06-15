@@ -105,8 +105,8 @@ export function PresetSelector({ presets }: PresetSelectorProps) {
                     className={cn(
                       "group relative rounded-lg border bg-card p-3 cursor-pointer transition-all duration-200",
                       "hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5",
-                      selectedPreset?.id === preset.id 
-                        ? "border-primary bg-primary/5 shadow-sm" 
+                      selectedPreset?.id === preset.id
+                        ? "border-primary bg-primary/5 shadow-sm"
                         : "border-border hover:bg-accent/5"
                     )}
                     onClick={() => handlePresetSelect(preset)}
@@ -117,7 +117,7 @@ export function PresetSelector({ presets }: PresetSelectorProps) {
                         <Check className="h-2 w-2 text-primary-foreground" />
                       </div>
                     )}
-                    
+
                     {/* Content */}
                     <div className="space-y-2">
                       {/* Header row */}
@@ -131,7 +131,7 @@ export function PresetSelector({ presets }: PresetSelectorProps) {
                           </h4>
                         </div>
                       </div>
-                      
+
                       {/* Category and description */}
                       <div className="space-y-1.5">
                         <div className="inline-flex">
