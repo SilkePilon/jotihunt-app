@@ -24,6 +24,7 @@ export function PresetSelector({ presets }: PresetSelectorProps) {
   const [selectedPreset, setSelectedPreset] = React.useState<Preset>()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [visibleCount, setVisibleCount] = React.useState(6)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isOpen, setIsOpen] = React.useState(false)
   const router = useRouter()
 
