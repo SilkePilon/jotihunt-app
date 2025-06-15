@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Code } from "lucide-react"
+import { ChevronLeftRight } from "@/components/animate-ui/icons/chevron-left-right"
 import { CodeTabs } from "@/components/animate-ui/components/code-tabs"
 
 interface MCPTool {
@@ -183,7 +183,7 @@ export function CodeViewer({
         size="icon"
         className="transition-transform hover:scale-105 active:scale-95"
       >
-        <Code className="h-4 w-4" />
+        <ChevronLeftRight animateOnHover className="h-4 w-4" />
         <span className="sr-only">View MCP Tools</span>
       </Button>
     </DialogTrigger>
@@ -201,11 +201,11 @@ export function CodeViewer({
             className="max-w-full h-full"
           />
           <div className="bg-muted/50 p-3 rounded-lg text-muted-foreground">
-              <p className="text-xs">
-                <strong>Tip:</strong> These code snippets serve as templates for building your own MCP server tools.
-                Modify the parameters, logic, and return values to match your specific use case.
-              </p>
-            </div>
+            <p className="text-xs">
+              <strong>Tip:</strong> These code snippets serve as templates for building your own MCP server tools.
+              Modify the parameters, logic, and return values to match your specific use case.
+            </p>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
