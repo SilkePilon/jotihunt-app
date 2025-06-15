@@ -39,8 +39,8 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                         <h1 className="text-base font-semibold">Playground</h1>
                     </div>                    <div className="flex items-center space-x-1.5 flex-shrink-0">                        {showGitHubStars && (
                         <GitHubStarsButton
-                            username="animate-ui"
-                            repo="animate-ui"
+                            username="SilkePilon"
+                            repo="mcp.silkepilon.dev"
                             formatted={true}
                             showDismiss={true}
                             onDismiss={() => setShowGitHubStars(false)}
