@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key } from "lucide-react"
+import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key, Copy, Trash2, Eye, EyeOff, BarChart3, TrendingUp, Calendar, Users, Activity } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,6 +13,11 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Switch } from "@/components/animate-ui/base/switch"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { CopyButton } from "@/components/animate-ui/buttons/copy"
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from "recharts"
 
 import { PlaygroundNavbar } from "@/components/playground-navbar"
 import { CodeTabs } from "@/components/animate-ui/components/code-tabs"
@@ -33,6 +38,12 @@ export default function MCPServerGeneratorPage() {
   const [serverStarted, setServerStarted] = useState(false)
   const [apiKey, setApiKey] = useState("")
   const [showIdeConfig, setShowIdeConfig] = useState(false)
+  const [apiKeys, setApiKeys] = useState<Array<{ id: string, name: string, key: string, createdAt: Date, lastUsed?: Date, usageCount?: number }>>([])
+  const [showApiKeyPopover, setShowApiKeyPopover] = useState(false)
+  const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
+  const [newApiKeyName, setNewApiKeyName] = useState("")
+  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
+  const [timeRange, setTimeRange] = useState("90d")
   // Available tools for autocomplete
   const availableTools = [
     { name: 'get_weather', icon: Globe, description: 'Get current weather conditions' },
@@ -209,6 +220,170 @@ export default function MCPServerGeneratorPage() {
 }`
     };
   };
+  // API Key Management Functions
+  const generateApiKey = () => {
+    const keyId = Math.random().toString(36).substring(2, 15)
+    const keyValue = 'mcp_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+    const name = newApiKeyName || `API Key ${apiKeys.length + 1}`
+
+    const newKey = {
+      id: keyId,
+      name: name,
+      key: keyValue,
+      createdAt: new Date(),
+      usageCount: 0,
+    }
+
+    setApiKeys(prev => [...prev, newKey])
+    setNewApiKeyName("")
+  }
+
+  const deleteApiKey = (keyId: string) => {
+    setApiKeys(prev => prev.filter(key => key.id !== keyId))
+    setVisibleKeys(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(keyId)
+      return newSet
+    })
+  }
+
+  const toggleKeyVisibility = (keyId: string) => {
+    setVisibleKeys(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(keyId)) {
+        newSet.delete(keyId)
+      } else {
+        newSet.add(keyId)
+      }
+      return newSet
+    })
+  }
+  // Chart data for analytics
+  const chartData = [
+    { date: "2024-04-01", desktop: 222, mobile: 150 },
+    { date: "2024-04-02", desktop: 97, mobile: 180 },
+    { date: "2024-04-03", desktop: 167, mobile: 120 },
+    { date: "2024-04-04", desktop: 242, mobile: 260 },
+    { date: "2024-04-05", desktop: 373, mobile: 290 },
+    { date: "2024-04-06", desktop: 301, mobile: 340 },
+    { date: "2024-04-07", desktop: 245, mobile: 180 },
+    { date: "2024-04-08", desktop: 409, mobile: 320 },
+    { date: "2024-04-09", desktop: 59, mobile: 110 },
+    { date: "2024-04-10", desktop: 261, mobile: 190 },
+    { date: "2024-04-11", desktop: 327, mobile: 350 },
+    { date: "2024-04-12", desktop: 292, mobile: 210 },
+    { date: "2024-04-13", desktop: 342, mobile: 380 },
+    { date: "2024-04-14", desktop: 137, mobile: 220 },
+    { date: "2024-04-15", desktop: 120, mobile: 170 },
+    { date: "2024-04-16", desktop: 138, mobile: 190 },
+    { date: "2024-04-17", desktop: 446, mobile: 360 },
+    { date: "2024-04-18", desktop: 364, mobile: 410 },
+    { date: "2024-04-19", desktop: 243, mobile: 180 },
+    { date: "2024-04-20", desktop: 89, mobile: 150 },
+    { date: "2024-04-21", desktop: 137, mobile: 200 },
+    { date: "2024-04-22", desktop: 224, mobile: 170 },
+    { date: "2024-04-23", desktop: 138, mobile: 230 },
+    { date: "2024-04-24", desktop: 387, mobile: 290 },
+    { date: "2024-04-25", desktop: 215, mobile: 250 },
+    { date: "2024-04-26", desktop: 75, mobile: 130 },
+    { date: "2024-04-27", desktop: 383, mobile: 420 },
+    { date: "2024-04-28", desktop: 122, mobile: 180 },
+    { date: "2024-04-29", desktop: 315, mobile: 240 },
+    { date: "2024-04-30", desktop: 454, mobile: 380 },
+    { date: "2024-05-01", desktop: 165, mobile: 220 },
+    { date: "2024-05-02", desktop: 293, mobile: 310 },
+    { date: "2024-05-03", desktop: 247, mobile: 190 },
+    { date: "2024-05-04", desktop: 385, mobile: 420 },
+    { date: "2024-05-05", desktop: 481, mobile: 390 },
+    { date: "2024-05-06", desktop: 498, mobile: 520 },
+    { date: "2024-05-07", desktop: 388, mobile: 300 },
+    { date: "2024-05-08", desktop: 149, mobile: 210 },
+    { date: "2024-05-09", desktop: 227, mobile: 180 },
+    { date: "2024-05-10", desktop: 293, mobile: 330 },
+    { date: "2024-05-11", desktop: 335, mobile: 270 },
+    { date: "2024-05-12", desktop: 197, mobile: 240 },
+    { date: "2024-05-13", desktop: 197, mobile: 160 },
+    { date: "2024-05-14", desktop: 448, mobile: 490 },
+    { date: "2024-05-15", desktop: 473, mobile: 380 },
+    { date: "2024-05-16", desktop: 338, mobile: 400 },
+    { date: "2024-05-17", desktop: 499, mobile: 420 },
+    { date: "2024-05-18", desktop: 315, mobile: 350 },
+    { date: "2024-05-19", desktop: 235, mobile: 180 },
+    { date: "2024-05-20", desktop: 177, mobile: 230 },
+    { date: "2024-05-21", desktop: 82, mobile: 140 },
+    { date: "2024-05-22", desktop: 81, mobile: 120 },
+    { date: "2024-05-23", desktop: 252, mobile: 290 },
+    { date: "2024-05-24", desktop: 294, mobile: 220 },
+    { date: "2024-05-25", desktop: 201, mobile: 250 },
+    { date: "2024-05-26", desktop: 213, mobile: 170 },
+    { date: "2024-05-27", desktop: 420, mobile: 460 },
+    { date: "2024-05-28", desktop: 233, mobile: 190 },
+    { date: "2024-05-29", desktop: 78, mobile: 130 },
+    { date: "2024-05-30", desktop: 340, mobile: 280 },
+    { date: "2024-05-31", desktop: 178, mobile: 230 },
+    { date: "2024-06-01", desktop: 178, mobile: 200 },
+    { date: "2024-06-02", desktop: 470, mobile: 410 },
+    { date: "2024-06-03", desktop: 103, mobile: 160 },
+    { date: "2024-06-04", desktop: 439, mobile: 380 },
+    { date: "2024-06-05", desktop: 88, mobile: 140 },
+    { date: "2024-06-06", desktop: 294, mobile: 250 },
+    { date: "2024-06-07", desktop: 323, mobile: 370 },
+    { date: "2024-06-08", desktop: 385, mobile: 320 },
+    { date: "2024-06-09", desktop: 438, mobile: 480 },
+    { date: "2024-06-10", desktop: 155, mobile: 200 },
+    { date: "2024-06-11", desktop: 92, mobile: 150 },
+    { date: "2024-06-12", desktop: 492, mobile: 420 },
+    { date: "2024-06-13", desktop: 81, mobile: 130 },
+    { date: "2024-06-14", desktop: 426, mobile: 380 },
+    { date: "2024-06-15", desktop: 307, mobile: 350 },
+    { date: "2024-06-16", desktop: 371, mobile: 310 },
+  ]
+
+  // Filter data based on time range
+  const filteredData = chartData.filter((item) => {
+    const date = new Date(item.date)
+    const referenceDate = new Date("2024-06-16")
+    let daysToSubtract = 90
+    if (timeRange === "30d") {
+      daysToSubtract = 30
+    } else if (timeRange === "7d") {
+      daysToSubtract = 7
+    }
+    const startDate = new Date(referenceDate)
+    startDate.setDate(startDate.getDate() - daysToSubtract)
+    return date >= startDate
+  })
+
+  // Mock analytics data
+  const getAnalyticsData = () => {
+    return {
+      totalRequests: filteredData.reduce((sum, day) => sum + day.desktop + day.mobile, 0),
+      totalErrors: Math.floor(filteredData.length * 2.5), // Mock error count
+      activeKeys: apiKeys.filter(key => key.usageCount && key.usageCount > 0).length,
+      keysByUsage: apiKeys.map(key => ({
+        name: key.name,
+        usage: key.usageCount || 0,
+      })).sort((a, b) => b.usage - a.usage),
+    }
+  }
+
+  const chartConfig = {
+    visitors: {
+      label: "Visitors",
+    },
+    desktop: {
+      label: "Desktop",
+      color: "var(--chart-1)",
+    },
+    mobile: {
+      label: "Mobile",
+      color: "var(--chart-2)",
+    },
+  } satisfies ChartConfig
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
   const handleRemoveTag = (toolName: string) => {
     const tagRegex = new RegExp(`@${toolName}\\b`, 'g')
     setPromptText(prev => prev.replace(tagRegex, '').replace(/\s+/g, ' ').trim())
@@ -768,8 +943,7 @@ export default function MCPServerGeneratorPage() {
                             <Button
                               variant="outline"
                               className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                              onClick={() => {/* Deploy to cloud functionality */ }}
-                            >
+                              onClick={() => {/* Deploy to cloud functionality */ }}                            >
                               <Globe className="w-4 h-4" />
                               <span className="text-xs">Deploy</span>
                             </Button>
@@ -778,14 +952,366 @@ export default function MCPServerGeneratorPage() {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            <Button
-                              variant="outline"
-                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                              onClick={() => {/* Generate API key functionality */ }}
-                            >
-                              <Key className="w-4 h-4" />
-                              <span className="text-xs">API Key</span>
-                            </Button>
+                            <Dialog open={showApiKeyDialog} onOpenChange={setShowApiKeyDialog}>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
+                                >
+                                  <Key className="w-4 h-4" />
+                                  <span className="text-xs">API Key</span>
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="w-[85vw] max-w-[1200px] min-w-[800px] max-h-[80vh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2">
+                                    <Key className="w-5 h-5" />
+                                    API Key Management
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    Manage your MCP server API keys and view usage analytics.
+                                  </DialogDescription>
+                                </DialogHeader>
+
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                  {/* Stats Cards */}
+                                  <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <Card>
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <p className="text-sm text-muted-foreground">Total Keys</p>
+                                            <p className="text-2xl font-bold">{apiKeys.length}</p>
+                                          </div>
+                                          <Key className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                    <Card>
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <p className="text-sm text-muted-foreground">Total Requests</p>
+                                            <p className="text-2xl font-bold">{getAnalyticsData().totalRequests}</p>
+                                          </div>
+                                          <BarChart3 className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                    <Card>
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <p className="text-sm text-muted-foreground">Active Keys</p>
+                                            <p className="text-2xl font-bold">{getAnalyticsData().activeKeys}</p>
+                                          </div>
+                                          <Activity className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                    <Card>
+                                      <CardContent className="p-4">
+                                        <div className="flex items-center justify-between">
+                                          <div>
+                                            <p className="text-sm text-muted-foreground">Error Rate</p>
+                                            <p className="text-2xl font-bold">{((getAnalyticsData().totalErrors / getAnalyticsData().totalRequests) * 100).toFixed(1)}%</p>
+                                          </div>
+                                          <TrendingUp className="w-8 h-8 text-muted-foreground" />
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </div>                                  {/* Usage Chart */}
+                                  <div className="lg:col-span-2">
+                                    <Card className="pt-0">
+                                      <CardHeader className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
+                                        <div className="grid flex-1 gap-1">
+                                          <CardTitle className="flex items-center gap-2">
+                                            <BarChart3 className="w-4 h-4" />
+                                            Usage Analytics - Interactive
+                                          </CardTitle>
+                                          <CardDescription>
+                                            Showing API usage for desktop and mobile clients
+                                          </CardDescription>
+                                        </div>
+                                        <Select value={timeRange} onValueChange={setTimeRange}>
+                                          <SelectTrigger
+                                            className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
+                                            aria-label="Select a value"
+                                          >
+                                            <SelectValue placeholder="Last 3 months" />
+                                          </SelectTrigger>
+                                          <SelectContent className="rounded-xl">
+                                            <SelectItem value="90d" className="rounded-lg">
+                                              Last 3 months
+                                            </SelectItem>
+                                            <SelectItem value="30d" className="rounded-lg">
+                                              Last 30 days
+                                            </SelectItem>
+                                            <SelectItem value="7d" className="rounded-lg">
+                                              Last 7 days
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </CardHeader>
+                                      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
+                                        <ChartContainer
+                                          config={chartConfig}
+                                          className="aspect-auto h-[250px] w-full"
+                                        >
+                                          <AreaChart data={filteredData}>
+                                            <defs>
+                                              <linearGradient id="fillDesktop" x1="0" y1="0" x2="0" y2="1">
+                                                <stop
+                                                  offset="5%"
+                                                  stopColor="var(--color-desktop)"
+                                                  stopOpacity={0.8}
+                                                />
+                                                <stop
+                                                  offset="95%"
+                                                  stopColor="var(--color-desktop)"
+                                                  stopOpacity={0.1}
+                                                />
+                                              </linearGradient>
+                                              <linearGradient id="fillMobile" x1="0" y1="0" x2="0" y2="1">
+                                                <stop
+                                                  offset="5%"
+                                                  stopColor="var(--color-mobile)"
+                                                  stopOpacity={0.8}
+                                                />
+                                                <stop
+                                                  offset="95%"
+                                                  stopColor="var(--color-mobile)"
+                                                  stopOpacity={0.1}
+                                                />
+                                              </linearGradient>
+                                            </defs>
+                                            <CartesianGrid vertical={false} />
+                                            <XAxis
+                                              dataKey="date"
+                                              tickLine={false}
+                                              axisLine={false}
+                                              tickMargin={8}
+                                              minTickGap={32}
+                                              tickFormatter={(value) => {
+                                                const date = new Date(value)
+                                                return date.toLocaleDateString("en-US", {
+                                                  month: "short",
+                                                  day: "numeric",
+                                                })
+                                              }}
+                                            />
+                                            <ChartTooltip
+                                              cursor={false}
+                                              content={
+                                                <ChartTooltipContent
+                                                  labelFormatter={(value) => {
+                                                    return new Date(value).toLocaleDateString("en-US", {
+                                                      month: "short",
+                                                      day: "numeric",
+                                                    })
+                                                  }}
+                                                  indicator="dot"
+                                                />
+                                              }
+                                            />
+                                            <Area
+                                              dataKey="mobile"
+                                              type="natural"
+                                              fill="url(#fillMobile)"
+                                              stroke="var(--color-mobile)"
+                                              stackId="a"
+                                            />
+                                            <Area
+                                              dataKey="desktop"
+                                              type="natural"
+                                              fill="url(#fillDesktop)"
+                                              stroke="var(--color-desktop)"
+                                              stackId="a"
+                                            />
+                                            <ChartLegend content={<ChartLegendContent />} />
+                                          </AreaChart>
+                                        </ChartContainer>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+
+                                  {/* Create New Key */}
+                                  <div className="lg:col-span-1">
+                                    <Card>
+                                      <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                          <Plus className="w-4 h-4" />
+                                          Create New Key
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent className="space-y-4">
+                                        <div className="space-y-2">
+                                          <Label htmlFor="new-api-key-name">Key Name</Label>
+                                          <Input
+                                            id="new-api-key-name"
+                                            placeholder="Enter key name"
+                                            value={newApiKeyName}
+                                            onChange={(e) => setNewApiKeyName(e.target.value)}
+                                          />
+                                        </div>
+                                        <Button onClick={generateApiKey} className="w-full">
+                                          <Plus className="w-4 h-4 mr-2" />
+                                          Generate Key
+                                        </Button>
+
+                                        <div className="text-xs text-muted-foreground space-y-1">
+                                          <p>• Keys are randomly generated</p>
+                                          <p>• Store keys securely</p>
+                                          <p>• Keys cannot be recovered</p>
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+
+                                  {/* API Keys List */}
+                                  <div className="lg:col-span-3">
+                                    <Card>
+                                      <CardHeader>
+                                        <CardTitle className="flex items-center gap-2">
+                                          <Users className="w-4 h-4" />
+                                          API Keys ({apiKeys.length})
+                                        </CardTitle>
+                                      </CardHeader>
+                                      <CardContent>
+                                        <div className="space-y-3">
+                                          {apiKeys.length === 0 ? (
+                                            <div className="text-center py-8 text-muted-foreground">
+                                              <Key className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                                              <p className="text-lg font-medium">No API keys yet</p>
+                                              <p className="text-sm">Create your first API key to get started</p>
+                                            </div>
+                                          ) : (
+                                            <AnimatePresence mode="popLayout">
+                                              {apiKeys.map((key) => (
+                                                <motion.div
+                                                  key={key.id}
+                                                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                  exit={{ opacity: 0, y: -20, scale: 0.9 }}
+                                                  transition={{
+                                                    type: "spring",
+                                                    stiffness: 400,
+                                                    damping: 25,
+                                                    duration: 0.3
+                                                  }}
+                                                  layout
+                                                  className="border rounded-lg p-4 space-y-3"
+                                                >
+                                                  <div className="flex items-center justify-between">
+                                                    <div className="space-y-1">
+                                                      <h4 className="font-medium">{key.name}</h4>
+                                                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                                        <span className="flex items-center gap-1">
+                                                          <Calendar className="w-3 h-3" />
+                                                          Created {key.createdAt.toLocaleDateString()}
+                                                        </span>
+                                                        <span className="flex items-center gap-1">
+                                                          <Activity className="w-3 h-3" />
+                                                          {key.usageCount || 0} requests
+                                                        </span>
+                                                        {key.lastUsed && (
+                                                          <span className="flex items-center gap-1">
+                                                            <Clock className="w-3 h-3" />
+                                                            Last used {key.lastUsed.toLocaleDateString()}
+                                                          </span>
+                                                        )}
+                                                      </div>
+                                                    </div>                                                  <div className="flex gap-2">
+                                                      <motion.div
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                                      >
+                                                        <Button
+                                                          size="sm"
+                                                          variant="outline"
+                                                          onClick={() => toggleKeyVisibility(key.id)}
+                                                          className="h-8 w-8 p-0"
+                                                        >
+                                                          <AnimatePresence mode="wait">
+                                                            {visibleKeys.has(key.id) ? (
+                                                              <motion.div
+                                                                key="hide"
+                                                                initial={{ scale: 0, rotate: -180 }}
+                                                                animate={{ scale: 1, rotate: 0 }}
+                                                                exit={{ scale: 0, rotate: 180 }}
+                                                                transition={{ duration: 0.2 }}
+                                                              >
+                                                                <EyeOff className="w-4 h-4" />
+                                                              </motion.div>
+                                                            ) : (
+                                                              <motion.div
+                                                                key="show"
+                                                                initial={{ scale: 0, rotate: 180 }}
+                                                                animate={{ scale: 1, rotate: 0 }}
+                                                                exit={{ scale: 0, rotate: -180 }}
+                                                                transition={{ duration: 0.2 }}
+                                                              >
+                                                                <Eye className="w-4 h-4" />
+                                                              </motion.div>
+                                                            )}
+                                                          </AnimatePresence>
+                                                        </Button>
+                                                      </motion.div>
+                                                      <motion.div
+                                                        whileHover={{ scale: 1.05 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                                      >
+                                                        <CopyButton
+                                                          content={key.key}
+                                                          variant="outline"
+                                                          size="sm"
+                                                          className="h-8 w-8 p-0"
+                                                        />
+                                                      </motion.div>
+                                                      <motion.div
+                                                        whileHover={{ scale: 1.05, rotate: 5 }}
+                                                        whileTap={{ scale: 0.95 }}
+                                                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                                                      >
+                                                        <Button
+                                                          size="sm"
+                                                          variant="outline"
+                                                          onClick={() => deleteApiKey(key.id)}
+                                                          className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                                                        >
+                                                          <motion.div
+                                                            whileHover={{ rotate: 10 }}
+                                                            transition={{ duration: 0.2 }}
+                                                          >
+                                                            <Trash2 className="w-4 h-4" />
+                                                          </motion.div>
+                                                        </Button>
+                                                      </motion.div>
+                                                    </div>
+                                                  </div>
+                                                  <div className="space-y-2">
+                                                    <div className="flex items-center justify-between text-sm">
+                                                      <span className="text-muted-foreground">API Key</span>
+                                                      <Badge variant="outline" className="text-xs">
+                                                        {visibleKeys.has(key.id) ? 'Visible' : 'Hidden'}
+                                                      </Badge>
+                                                    </div>
+                                                    <div className="font-mono text-sm bg-muted/50 rounded p-3 break-all">
+                                                      {visibleKeys.has(key.id) ? key.key : '••••••••••••••••••••••••••••••••••••••••••••••••••••••'}
+                                                    </div>                                                  </div>
+                                                </motion.div>
+                                              ))}
+                                            </AnimatePresence>
+                                          )}
+                                        </div>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </motion.div>
                           <motion.div
                             whileHover={{ scale: 1.02 }}
