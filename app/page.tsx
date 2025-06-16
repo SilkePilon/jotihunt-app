@@ -162,7 +162,8 @@ export default function MCPServerGeneratorPage() {
           textarea.focus()
           textarea.setSelectionRange(newCursorPos, newCursorPos)
         }
-      }, 10)    }
+      }, 10)
+    }
   }
   const handleTestServer = async () => {
     if (!serverStarted) {
@@ -188,12 +189,13 @@ export default function MCPServerGeneratorPage() {
       setServerStarted(false);
       setShowIdeConfig(false);
       setTestOutput("Development server stopped.\n");
-      setApiKey("");    }
+      setApiKey("");
+    }
   };
 
   const getIdeConfig = () => {
     return {
-      "VS Code (.cursor/mcp.json)": `{
+      "VS Code": `{
   "mcpServers": {
     "weather-server": {
       "command": "node",
@@ -204,31 +206,7 @@ export default function MCPServerGeneratorPage() {
       }
     }
   }
-}`,
-      "Claude Desktop": `{
-  "mcpServers": {
-    "weather-server": {
-      "command": "node", 
-      "args": ["path/to/your/weather-server/dist/server.js"],
-      "env": {
-        "API_KEY": "${apiKey}"
-      }
-    }
-  }
-}`,
-      "Installation": `# 1. Save the server code to a new directory
-mkdir weather-server && cd weather-server
-
-# 2. Copy the generated files (server.ts, package.json)
-# 3. Install dependencies
-npm install
-
-# 4. Build the server
-npm run build
-
-# 5. Add the configuration to your IDE
-# VS Code: .cursor/mcp.json
-# Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json`
+}`
     };
   };
   const handleRemoveTag = (toolName: string) => {
@@ -877,7 +855,7 @@ npm run build
                               codes={getIdeConfig()}
                               lang="json"
                               copyButton={true}
-                              defaultValue="VS Code (.cursor/mcp.json)"
+                              defaultValue="VS Code"
                             />
                           </motion.div>
                         )}
