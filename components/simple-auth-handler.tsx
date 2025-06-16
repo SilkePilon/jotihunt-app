@@ -10,7 +10,7 @@ export function SimpleAuthHandler() {
     useEffect(() => {
         if (!isLoaded) return        // Check if this is the first time loading after sign in
         const hasJustSignedIn = localStorage.getItem('clerk-sign-in-pending')
-        
+
         if (hasJustSignedIn && isSignedIn && user) {
             // Clear the flag
             localStorage.removeItem('clerk-sign-in-pending')

@@ -51,7 +51,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             className="mr-4"
                         />
                     )}
-                          {/* Authenticated user components with animation */}
+                        {/* Authenticated user components with animation */}
                         <AnimatePresence mode="wait">
                             {isLoaded && isSignedIn && (
                                 <motion.div
@@ -59,7 +59,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                                     initial={{ opacity: 0, scale: 0.8, x: -20 }}
                                     animate={{ opacity: 1, scale: 1, x: 0 }}
                                     exit={{ opacity: 0, scale: 0.8, x: -20 }}
-                                    transition={{ 
+                                    transition={{
                                         duration: 0.4,
                                         ease: "easeOut",
                                         staggerChildren: 0.1
