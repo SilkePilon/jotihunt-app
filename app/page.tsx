@@ -320,7 +320,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npm start
 
   const getIdeConfig = () => {
     return {
-      "VS Code (.cursor/mcp.json)": `{
+      "VS Code": `{
   "mcpServers": {
     "weather-server": {
       "command": "node",
@@ -331,36 +331,13 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npm start
       }
     }
   }
-}`,
-      "Claude Desktop": `{
-  "mcpServers": {
-    "weather-server": {
-      "command": "node", 
-      "args": ["path/to/your/weather-server/dist/server.js"],
-      "env": {
-        "API_KEY": "${apiKey}"
-      }
-    }
-  }
-}`,
-      "Installation": `# 1. Save the server code to a new directory
-mkdir weather-server && cd weather-server
-
-# 2. Copy the generated files (server.ts, package.json)
-# 3. Install dependencies
-npm install
-
-# 4. Build the server
-npm run build
-
-# 5. Add the configuration to your IDE
-# VS Code: .cursor/mcp.json
-# Claude Desktop: ~/Library/Application Support/Claude/claude_desktop_config.json`
+}`
     };
   };
+
   const handleRemoveTag = (toolName: string) => {
     const tagRegex = new RegExp(`@${toolName}\\b`, 'g')
-    setPromptText(prev => prev.replace(tagRegex, '').replace(/\s+/g, ' ').trim())
+    setPromptText((prev: string) => prev.replace(tagRegex, '').replace(/\s+/g, ' ').trim())
   }
 
   return (
@@ -716,13 +693,7 @@ npm run build
                                   exit={{ opacity: 0 }}
                                   className="space-y-4"
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <CheckCircle className="w-4 h-4 text-green-500" />
-                                      <h4 className="text-sm font-medium text-foreground">Generated Tools</h4>
-                                    </div>
-                                    <Badge variant="secondary" className="text-xs">3 tools</Badge>
-                                  </div>
+
 
                                   {/* Tool Cards */}
                                   <div className="space-y-3">                                <motion.div
@@ -1005,7 +976,7 @@ npm run build
                               codes={getIdeConfig()}
                               lang="json"
                               copyButton={true}
-                              defaultValue="VS Code (.cursor/mcp.json)"
+                              defaultValue="VS Code"
                             />
                           </motion.div>
                         )}
