@@ -26,29 +26,17 @@ export function AuthPrompt() {
             transition={{ duration: 0.3, ease: "easeOut" }}
         >
             <Popover>                <PopoverTrigger
-                render={
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="transition-transform hover:scale-105 active:scale-95 border-dashed border-2 hover:bg-muted/50"
-                    >
-                        <motion.div
-                            animate={{
-                                scale: [1, 1.1, 1],
-                                opacity: [0.7, 1, 0.7]
-                            }}
-                            transition={{
-                                duration: 2,
-                                repeat: Infinity,
-                                ease: "easeInOut"
-                            }}
+                    render={
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="transition-transform hover:scale-105 active:scale-95 border-dashed border-2 hover:bg-muted/50"
                         >
                             <Lock className="h-4 w-4" />
-                        </motion.div>
-                        <span className="sr-only">Locked features</span>
-                    </Button>
-                }
-            />                <PopoverContent
+                            <span className="sr-only">Locked features</span>
+                        </Button>
+                    }
+                /><PopoverContent
                 align="center"
                 side="bottom"
                 sideOffset={8}
