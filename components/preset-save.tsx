@@ -26,7 +26,7 @@ export function PresetSave() {
       toast.error("Please enter a preset name")
       return
     }
-    
+
     // Here you would typically save the preset to your backend/state management
     toast.success("Preset saved successfully!", {
       description: `"${name}" has been saved to your presets`,
@@ -35,7 +35,7 @@ export function PresetSave() {
         onClick: () => console.log("View presets"),
       },
     })
-    
+
     setOpen(false)
     setName("")
     setDescription("")
@@ -43,15 +43,15 @@ export function PresetSave() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}><DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="icon"
-          className="transition-transform hover:scale-105 active:scale-95"
-        >
-          <Save className="h-4 w-4" />
-          <span className="sr-only">Save preset</span>
-        </Button>
-      </DialogTrigger>
+      <Button
+        variant="outline"
+        size="icon"
+        className="transition-transform hover:scale-105 active:scale-95"
+      >
+        <Save className="h-4 w-4" />
+        <span className="sr-only">Save preset</span>
+      </Button>
+    </DialogTrigger>
       <DialogContent className="sm:max-w-[475px]">
         <DialogHeader>
           <DialogTitle>Save preset</DialogTitle>
@@ -62,17 +62,17 @@ export function PresetSave() {
         </DialogHeader>        <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <Label htmlFor="name">Name</Label>
-            <Input 
-              id="name" 
+            <Input
+              id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              autoFocus 
+              autoFocus
             />
           </div>
           <div className="grid gap-2">
             <Label htmlFor="description">Description</Label>
-            <Input 
-              id="description" 
+            <Input
+              id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />

@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner"
 import { ThemeProvider } from "@/components/theme-provider"
 import { ClerkThemeProvider } from "@/components/clerk-theme-provider"
+import { SimpleAuthHandler } from "@/components/simple-auth-handler"
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,6 +37,7 @@ export default function RootLayout({
           enableSystem
         >
           <ClerkThemeProvider>
+            <SimpleAuthHandler />
             <div className="min-h-screen">
               {children}
             </div>

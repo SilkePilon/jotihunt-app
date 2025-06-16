@@ -10,7 +10,6 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useUser, useClerk } from "@clerk/nextjs"
 import Image from "next/image"
-import { toast } from "sonner"
 
 interface ProfileSettingsPopoverProps {
     trigger?: React.ReactElement
@@ -21,19 +20,13 @@ export function ProfileSettingsPopover({ trigger }: ProfileSettingsPopoverProps)
     const { signOut, openUserProfile } = useClerk()
 
     const handleSignOut = () => {
-        toast.promise(
-            signOut(),
-            {
-                loading: "Signing out...",
-                success: "Successfully signed out!",
-                error: "Failed to sign out",
-            }
-        )
+        // Set flag that sign-out is happening
+        localStorage.setItem('clerk-sign-out-pending', 'true')
+        signOut()
     }
 
     const handleOpenProfile = () => {
         openUserProfile()
-        toast.info("Opening profile settings...")
     }
 
     if (!user) return null
@@ -100,19 +93,19 @@ export function ProfileSettingsPopover({ trigger }: ProfileSettingsPopoverProps)
 
                     <Separator />          {/* Menu Items */}
                     <div className="space-y-2">                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start"
-                            onClick={handleOpenProfile}
-                        >
-                            <Settings className="h-4 w-4 mr-2" />
-                            Profile Settings
-                        </Button>                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full justify-start"
-                            onClick={handleSignOut}
-                        >
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={handleOpenProfile}
+                    >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Profile Settings
+                    </Button>                        <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full justify-start"
+                        onClick={handleSignOut}
+                    >
                             <LogOut className="h-4 w-4 mr-2" />
                             Sign out
                         </Button>

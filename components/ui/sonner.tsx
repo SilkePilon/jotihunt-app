@@ -12,7 +12,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       richColors
       expand={true}
-      position="top-right"
+      position="bottom-right"
       style={
         {
           "--normal-bg": "var(--popover)",

@@ -29,21 +29,22 @@ export function CustomSignIn({ open, onOpenChange }: CustomSignInProps) {
         setError("")
 
         try {
-            toast.loading(`Connecting to ${provider === "oauth_github" ? "GitHub" : "Google"}...`)
-            
+            // Set flag that sign-in is happening
+            localStorage.setItem('clerk-sign-in-pending', 'true')
+
             await signIn?.authenticateWithRedirect({
                 strategy: provider,
                 redirectUrl: "/",
                 redirectUrlComplete: "/",
             })
-            
-            // This will typically redirect, but if it doesn't:
-            toast.success(`Successfully signed in with ${provider === "oauth_github" ? "GitHub" : "Google"}!`)
         } catch (err: unknown) {
+            // Clear the flag if sign-in fails
+            localStorage.removeItem('clerk-sign-in-pending')
+
             const errorMessage = err && typeof err === 'object' && 'errors' in err && Array.isArray(err.errors) && err.errors[0] && typeof err.errors[0] === 'object' && 'message' in err.errors[0]
                 ? err.errors[0].message as string
                 : `${provider === "oauth_github" ? "GitHub" : "Google"} sign-in failed`
-            
+
             toast.error("Sign-in failed", {
                 description: errorMessage,
             })
