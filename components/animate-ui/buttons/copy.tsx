@@ -4,6 +4,7 @@ import * as React from 'react';
 import { AnimatePresence, HTMLMotionProps, motion } from 'motion/react';
 import { CheckIcon, CopyIcon } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
+import { toast } from "sonner";
 
 import { cn } from '@/lib/utils';
 
@@ -83,10 +84,12 @@ function CopyButton({
           .then(() => {
             handleIsCopied(true);
             setTimeout(() => handleIsCopied(false), delay);
+            toast.success("Copied to clipboard!");
             onCopy?.(content);
           })
           .catch((error) => {
             console.error('Error copying command', error);
+            toast.error("Failed to copy to clipboard");
           });
       }
       onClick?.(e);

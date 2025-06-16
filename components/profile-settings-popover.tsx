@@ -10,6 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { useUser, useClerk } from "@clerk/nextjs"
 import Image from "next/image"
+import { toast } from "sonner"
 
 interface ProfileSettingsPopoverProps {
     trigger?: React.ReactElement
@@ -18,6 +19,22 @@ interface ProfileSettingsPopoverProps {
 export function ProfileSettingsPopover({ trigger }: ProfileSettingsPopoverProps) {
     const { user } = useUser()
     const { signOut, openUserProfile } = useClerk()
+
+    const handleSignOut = () => {
+        toast.promise(
+            signOut(),
+            {
+                loading: "Signing out...",
+                success: "Successfully signed out!",
+                error: "Failed to sign out",
+            }
+        )
+    }
+
+    const handleOpenProfile = () => {
+        openUserProfile()
+        toast.info("Opening profile settings...")
+    }
 
     if (!user) return null
 
@@ -82,12 +99,11 @@ export function ProfileSettingsPopover({ trigger }: ProfileSettingsPopoverProps)
                     </div>
 
                     <Separator />          {/* Menu Items */}
-                    <div className="space-y-2">
-                        <Button
+                    <div className="space-y-2">                        <Button
                             variant="outline"
                             size="sm"
                             className="w-full justify-start"
-                            onClick={() => openUserProfile()}
+                            onClick={handleOpenProfile}
                         >
                             <Settings className="h-4 w-4 mr-2" />
                             Profile Settings
@@ -95,7 +111,7 @@ export function ProfileSettingsPopover({ trigger }: ProfileSettingsPopoverProps)
                             variant="outline"
                             size="sm"
                             className="w-full justify-start"
-                            onClick={() => signOut()}
+                            onClick={handleSignOut}
                         >
                             <LogOut className="h-4 w-4 mr-2" />
                             Sign out
