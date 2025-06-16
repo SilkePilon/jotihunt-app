@@ -246,8 +246,7 @@ ${getConfigContent(false)}`,
             <CollapsibleContent 
               className="space-y-4 pt-4"
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-            >
-              <p className="text-xs text-muted-foreground">
+            >              <p className="text-sm text-muted-foreground">
                 Install this MCP server directly in Cursor with a single click using deeplinks.
               </p>
 
@@ -292,7 +291,7 @@ ${getConfigContent(false)}`,
                 />
               </div>
               
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Click &quot;Add to Cursor&quot; to install directly, or copy the deeplink to share with others.
               </p>
             </CollapsibleContent>
