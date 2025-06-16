@@ -2,10 +2,17 @@
 
 import * as React from "react"
 import { Share } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Card } from "@/components/ui/card"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/animate-ui/radix/collapsible"
 import {
   Popover,
   PopoverContent,
@@ -13,70 +20,80 @@ import {
 } from "@/components/animate-ui/base/popover"
 import { CopyButton } from "@/components/animate-ui/buttons/copy"
 import { CodeTabs } from '@/components/animate-ui/components/code-tabs';
+import { Switch } from "@/components/animate-ui/base/switch"
 import { Cursor } from '@lobehub/icons';
+import { ChevronDown } from "lucide-react"
 
 export function PresetShare() {
+  const [hasExistingServers, setHasExistingServers] = React.useState(false)
+  const [openSection, setOpenSection] = React.useState<'config' | 'cursor' | null>('config')
+
+  const getConfigContent = (hasWrapper: boolean) => {
+    const serverConfig = {
+      "command": "npx",
+      "args": ["-y", "shadcn@canary", "registry:mcp"],
+      "env": {
+        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
+      }
+    }
+
+    if (hasWrapper) {
+      return `"shadcn": ${JSON.stringify(serverConfig, null, 6)}`
+    } else {
+      return JSON.stringify({
+        "mcpServers": { "shadcn": serverConfig }
+      }, null, 2)
+    }
+  }
+
+  const getVSCodeConfigContent = (hasWrapper: boolean) => {
+    const serverConfig = {
+      "command": "npx",
+      "args": ["-y", "shadcn@canary", "registry:mcp"],
+      "env": {
+        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
+      }
+    }
+
+    if (hasWrapper) {
+      return `"shadcn": ${JSON.stringify(serverConfig, null, 6)}`
+    } else {
+      return JSON.stringify({
+        "mcp.servers": { "shadcn": serverConfig }
+      }, null, 2)
+    }
+  }
+
   const CODES = {
-    Cursor: `// Copy and paste the code into .cursor/mcp.json
-{
-  "mcpServers": {
-    "shadcn": {
-      "command": "npx",
-      "args": ["-y", "shadcn@canary", "registry:mcp"],
-      "env": {
-        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
-      }
-    }
-  }
-}`,
-    Windsurf: `// Copy and paste the code into .codeium/windsurf/mcp_config.json
-{
-  "mcpServers": {
-    "shadcn": {
-      "command": "npx",
-      "args": ["-y", "shadcn@canary", "registry:mcp"],
-      "env": {
-        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
-      }
-    }
-  }
-}`,
-    "VS Code": `// Copy and paste the code into .vscode/settings.json
-{
-  "mcp.servers": {
-    "shadcn": {
-      "command": "npx",
-      "args": ["-y", "shadcn@canary", "registry:mcp"],
-      "env": {
-        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
-      }
-    }
-  }
-}`,
-    "VS Code Insiders": `// Copy and paste the code into .vscode-insiders/settings.json
-{
-  "mcp.servers": {
-    "shadcn": {
-      "command": "npx",
-      "args": ["-y", "shadcn@canary", "registry:mcp"],
-      "env": {
-        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
-      }
-    }
-  }
-}`,
-    "Claude Desktop": `// Copy and paste the code into claude_desktop_config.json
-{
-  "mcpServers": {
-    "shadcn": {
-      "command": "npx",
-      "args": ["-y", "shadcn@canary", "registry:mcp"],
-      "env": {
-        "REGISTRY_URL": "https://animate-ui.com/r/registry.json"
-      }
-    }
-  }
-}`,
+    Cursor: hasExistingServers 
+      ? `// Add this to your existing mcpServers object in .cursor/mcp.json
+${getConfigContent(true)}`
+      : `// Copy and paste the code into .cursor/mcp.json
+${getConfigContent(false)}`,
+    
+    Windsurf: hasExistingServers
+      ? `// Add this to your existing mcpServers object in .codeium/windsurf/mcp_config.json
+${getConfigContent(true)}`
+      : `// Copy and paste the code into .codeium/windsurf/mcp_config.json
+${getConfigContent(false)}`,
+    
+    "VS Code": hasExistingServers
+      ? `// Add this to your existing mcp.servers object in .vscode/settings.json
+${getVSCodeConfigContent(true)}`
+      : `// Copy and paste the code into .vscode/settings.json
+${getVSCodeConfigContent(false)}`,
+    
+    "VS Code Insiders": hasExistingServers
+      ? `// Add this to your existing mcp.servers object in .vscode-insiders/settings.json
+${getVSCodeConfigContent(true)}`
+      : `// Copy and paste the code into .vscode-insiders/settings.json
+${getVSCodeConfigContent(false)}`,
+    
+    "Claude Desktop": hasExistingServers
+      ? `// Add this to your existing mcpServers object in claude_desktop_config.json
+${getConfigContent(true)}`
+      : `// Copy and paste the code into claude_desktop_config.json
+${getConfigContent(false)}`,
   };
   return (
     <div className="flex-shrink-0">
@@ -121,22 +138,115 @@ export function PresetShare() {
               size="sm"
               delay={2500}
               className="h-9 w-9 flex-shrink-0"
-            /></div>
-          <p className="text-sm text-muted-foreground pt-4">
-            Share these configuration snippets with others so they can easily add your MCP server to their editor.
+            /></div>          <p className="text-sm text-muted-foreground pt-4">
+            Choose how you want to share your MCP server configuration.
           </p>
-          <div className="pt-4">
-            <CodeTabs lang="json" codes={CODES} />
-          </div>
+          
+          <Collapsible 
+            className="mt-4" 
+            open={openSection === 'config'}
+            onOpenChange={(isOpen) => setOpenSection(isOpen ? 'config' : null)}
+          >
+            <CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-between p-3 h-auto bg-muted/50 rounded-lg border border-border group mb-4"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-green-500/20">
+                    <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                    </svg>
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground">Configuration Snippets</h4>
+                      <span className="text-xs bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 px-2 py-1 rounded-full font-medium">
+                        Copy & Paste
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Ready-to-use configuration files
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+
+            <CollapsibleContent 
+              className="space-y-4"
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            >
+              <p className="text-sm text-muted-foreground">
+                Share these configuration snippets with others so they can easily add your MCP server to their editor.
+              </p>
+              
+              <Card className="p-4 bg-muted/50 border-dashed">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label htmlFor="existing-servers-switch" className="text-sm font-medium">
+                      I already have other MCP servers installed
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Toggle this to show only the server configuration without wrapper objects
+                    </p>
+                  </div>
+                  <Switch
+                    id="existing-servers-switch"
+                    checked={hasExistingServers}
+                    onCheckedChange={setHasExistingServers}
+                  />
+                </div>
+              </Card>
+              
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={hasExistingServers ? 'existing' : 'new'}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <CodeTabs lang="json" codes={CODES} />
+                </motion.div>
+              </AnimatePresence>
+            </CollapsibleContent></Collapsible>
+          
           {/* Cursor IDE Deeplink Section */}
-          <div className="pt-6 border-t">
-            <div className="flex flex-col space-y-4">
-              <div className="flex items-center gap-2">
-                <h4 className="text-sm font-semibold">Cursor Users</h4>
-                <span className="text-xs bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded-full">
-                  One-Click Install
-                </span>
-              </div>
+          <Collapsible 
+            className="mt-2" 
+            open={openSection === 'cursor'}
+            onOpenChange={(isOpen) => setOpenSection(isOpen ? 'cursor' : null)}
+          ><CollapsibleTrigger asChild>
+              <Button
+                variant="ghost"
+                className="flex w-full justify-between p-3 h-auto bg-muted/50 rounded-lg border border-border group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-md bg-blue-500/20">
+                    <Cursor size={16} className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div className="text-left">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold text-foreground">Cursor Users</h4>
+                      <span className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 px-2 py-1 rounded-full font-medium">
+                        One-Click Install
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Install directly with deeplinks
+                    </p>
+                  </div>
+                </div>
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
+              </Button>
+            </CollapsibleTrigger>
+            
+            <CollapsibleContent 
+              className="space-y-4 pt-4"
+              transition={{ type: 'spring', stiffness: 200, damping: 20 }}
+            >
               <p className="text-xs text-muted-foreground">
                 Install this MCP server directly in Cursor with a single click using deeplinks.
               </p>
@@ -180,11 +290,13 @@ export function PresetShare() {
                   delay={2500}
                   className="h-8 w-8 flex-shrink-0"
                 />
-              </div>              <p className="text-xs text-muted-foreground">
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
                 Click &quot;Add to Cursor&quot; to install directly, or copy the deeplink to share with others.
               </p>
-            </div>
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         </PopoverContent>
       </Popover>
     </div>
