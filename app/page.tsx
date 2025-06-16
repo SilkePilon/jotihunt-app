@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit } from "lucide-react"
+import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, Edit } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -72,7 +72,6 @@ export default function MCPServerGeneratorPage() {
     newUrls[index] = value
     setUrls(newUrls)
   }
-
   const handleGenerate = () => {
     setIsGenerating(true)
     setIsGenerated(false)
@@ -82,6 +81,7 @@ export default function MCPServerGeneratorPage() {
       setIsGenerated(true)
     }, 3000)
   }
+
   const handleToolTag = (toolName: string) => {
     const tag = `@${toolName}`    // Check if tag already exists
     if (promptText.includes(tag)) {
@@ -95,8 +95,7 @@ export default function MCPServerGeneratorPage() {
         textarea.focus()
         textarea.setSelectionRange(tag.length + 1, tag.length + 1)
       }
-    }, 100)
-  }
+    }, 100)  }
 
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const value = e.target.value
@@ -165,126 +164,6 @@ export default function MCPServerGeneratorPage() {
       }, 10)
     }
   }
-
-  // Generated server code examples for testing
-  const getGeneratedCode = () => {
-    return {
-      "server.ts": `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
-
-const server = new Server(
-  {
-    name: 'weather-server',
-    version: '0.1.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'get_weather',
-        description: 'Get current weather conditions for a city',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            city: { type: 'string', description: 'The city name' },
-          },
-          required: ['city'],
-        },
-      },
-      {
-        name: 'get_forecast',
-        description: 'Get 5-day weather forecast for a city',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            city: { type: 'string', description: 'The city name' },
-            days: { type: 'number', description: 'Number of days (1-5)', default: 5 },
-          },
-          required: ['city'],
-        },
-      },
-    ],
-  };
-});
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  switch (request.params.name) {
-    case 'get_weather':
-      const { city } = request.params.arguments as { city: string };
-      return {
-        content: [{ type: 'text', text: \`Weather in \${city}: 72°F, sunny\` }],
-      };
-    case 'get_forecast':
-      const { city: forecastCity } = request.params.arguments as { city: string };
-      return {
-        content: [{ type: 'text', text: \`5-day forecast for \${forecastCity}: Mostly sunny\` }],
-      };
-    default:
-      throw new Error(\`Unknown tool: \${request.params.name}\`);
-  }
-});
-
-const transport = new StdioServerTransport();
-server.connect(transport);`,
-      "package.json": `{
-  "name": "weather-mcp-server",
-  "version": "0.1.0",
-  "description": "Weather MCP Server",
-  "main": "dist/server.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "tsx src/server.ts"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.1.0",
-    "zod": "^3.22.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
-  }
-}`,
-      "README.md": `# Weather MCP Server
-
-A Model Context Protocol server that provides weather information tools.
-
-## Installation
-
-\`\`\`bash
-npm install
-npm run build
-\`\`\`
-
-## Usage
-
-\`\`\`bash
-npm start
-\`\`\`
-
-## Tools
-
-- **get_weather**: Get current weather conditions
-- **get_forecast**: Get 5-day weather forecast
-
-## Testing
-
-\`\`\`bash
-echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npm start
-\`\`\`
-`
-    };
-  };
   const handleTestServer = async () => {
     if (!serverStarted) {
       // Start server and generate API key
@@ -310,13 +189,7 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npm start
       setShowIdeConfig(false);
       setTestOutput("Development server stopped.\n");
       setApiKey("");
-    }
-  };
-
-  const generateApiKey = () => {
-    const newApiKey = 'mcp_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    setApiKey(newApiKey);
-  };
+    }  };
 
   const getIdeConfig = () => {
     return {
