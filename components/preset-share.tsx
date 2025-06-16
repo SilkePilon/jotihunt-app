@@ -65,30 +65,30 @@ export function PresetShare() {
   }
 
   const CODES = {
-    Cursor: hasExistingServers 
+    Cursor: hasExistingServers
       ? `// Add this to your existing mcpServers object in .cursor/mcp.json
 ${getConfigContent(true)}`
       : `// Copy and paste the code into .cursor/mcp.json
 ${getConfigContent(false)}`,
-    
+
     Windsurf: hasExistingServers
       ? `// Add this to your existing mcpServers object in .codeium/windsurf/mcp_config.json
 ${getConfigContent(true)}`
       : `// Copy and paste the code into .codeium/windsurf/mcp_config.json
 ${getConfigContent(false)}`,
-    
+
     "VS Code": hasExistingServers
       ? `// Add this to your existing mcp.servers object in .vscode/settings.json
 ${getVSCodeConfigContent(true)}`
       : `// Copy and paste the code into .vscode/settings.json
 ${getVSCodeConfigContent(false)}`,
-    
+
     "VS Code Insiders": hasExistingServers
       ? `// Add this to your existing mcp.servers object in .vscode-insiders/settings.json
 ${getVSCodeConfigContent(true)}`
       : `// Copy and paste the code into .vscode-insiders/settings.json
 ${getVSCodeConfigContent(false)}`,
-    
+
     "Claude Desktop": hasExistingServers
       ? `// Add this to your existing mcpServers object in claude_desktop_config.json
 ${getConfigContent(true)}`
@@ -141,9 +141,9 @@ ${getConfigContent(false)}`,
             /></div>          <p className="text-sm text-muted-foreground pt-4">
             Choose how you want to share your MCP server configuration.
           </p>
-          
-          <Collapsible 
-            className="mt-4" 
+
+          <Collapsible
+            className="mt-4"
             open={openSection === 'config'}
             onOpenChange={(isOpen) => setOpenSection(isOpen ? 'config' : null)}
           >
@@ -174,14 +174,14 @@ ${getConfigContent(false)}`,
               </Button>
             </CollapsibleTrigger>
 
-            <CollapsibleContent 
+            <CollapsibleContent
               className="space-y-4"
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >
               <p className="text-sm text-muted-foreground">
                 Share these configuration snippets with others so they can easily add your MCP server to their editor.
               </p>
-              
+
               <Card className="p-4 bg-muted/50 border-dashed">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
@@ -199,7 +199,7 @@ ${getConfigContent(false)}`,
                   />
                 </div>
               </Card>
-              
+
               <AnimatePresence mode="wait">
                 <motion.div
                   key={hasExistingServers ? 'existing' : 'new'}
@@ -212,10 +212,10 @@ ${getConfigContent(false)}`,
                 </motion.div>
               </AnimatePresence>
             </CollapsibleContent></Collapsible>
-          
+
           {/* Cursor IDE Deeplink Section */}
-          <Collapsible 
-            className="mt-2" 
+          <Collapsible
+            className="mt-2"
             open={openSection === 'cursor'}
             onOpenChange={(isOpen) => setOpenSection(isOpen ? 'cursor' : null)}
           ><CollapsibleTrigger asChild>
@@ -242,8 +242,8 @@ ${getConfigContent(false)}`,
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]:rotate-180" />
               </Button>
             </CollapsibleTrigger>
-            
-            <CollapsibleContent 
+
+            <CollapsibleContent
               className="space-y-4 pt-4"
               transition={{ type: 'spring', stiffness: 200, damping: 20 }}
             >              <p className="text-sm text-muted-foreground">
@@ -290,7 +290,7 @@ ${getConfigContent(false)}`,
                   className="h-8 w-8 flex-shrink-0"
                 />
               </div>
-              
+
               <p className="text-sm text-muted-foreground">
                 Click &quot;Add to Cursor&quot; to install directly, or copy the deeplink to share with others.
               </p>
