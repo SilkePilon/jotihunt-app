@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit } from "lucide-react"
+import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -746,26 +746,61 @@ export default function MCPServerGeneratorPage() {
                         <CardDescription>
                           Deploy, install, or share your MCP server
                         </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                          <Button variant="outline" size="sm" className="w-full justify-start">
-                            <Download className="w-4 h-4 mr-2" />
-                            Install Locally
-                          </Button>
-                        </motion.div>
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                          <Button variant="outline" size="sm" className="w-full justify-start">
-                            <Globe className="w-4 h-4 mr-2" />
-                            Deploy to Cloud
-                          </Button>
-                        </motion.div>
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                          <Button variant="outline" size="sm" className="w-full justify-start">
-                            <Share2 className="w-4 h-4 mr-2" />
-                            Share with Community
-                          </Button>
-                        </motion.div>
+                      </CardHeader>                      <CardContent>
+                        <div className="grid grid-cols-2 gap-2">
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              variant="outline"
+                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
+                              onClick={() => {/* Install locally functionality */ }}
+                            >
+                              <Download className="w-4 h-4" />
+                              <span className="text-xs">Install</span>
+                            </Button>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              variant="outline"
+                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
+                              onClick={() => {/* Deploy to cloud functionality */ }}
+                            >
+                              <Globe className="w-4 h-4" />
+                              <span className="text-xs">Deploy</span>
+                            </Button>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              variant="outline"
+                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
+                              onClick={() => {/* Generate API key functionality */ }}
+                            >
+                              <Key className="w-4 h-4" />
+                              <span className="text-xs">API Key</span>
+                            </Button>
+                          </motion.div>
+                          <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <Button
+                              variant="outline"
+                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
+                              onClick={() => {/* Share with community functionality */ }}
+                            >
+                              <Share2 className="w-4 h-4" />
+                              <span className="text-xs">Share</span>
+                            </Button>
+                          </motion.div>
+                        </div>
                       </CardContent>
                     </Card>
                   </motion.div>
