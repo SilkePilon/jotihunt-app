@@ -162,129 +162,8 @@ export default function MCPServerGeneratorPage() {
           textarea.focus()
           textarea.setSelectionRange(newCursorPos, newCursorPos)
         }
-      }, 10)
-    }
+      }, 10)    }
   }
-
-  // Generated server code examples for testing
-  const getGeneratedCode = () => {
-    return {
-      "server.ts": `import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
-
-const server = new Server(
-  {
-    name: 'weather-server',
-    version: '0.1.0',
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
-
-server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return {
-    tools: [
-      {
-        name: 'get_weather',
-        description: 'Get current weather conditions for a city',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            city: { type: 'string', description: 'The city name' },
-          },
-          required: ['city'],
-        },
-      },
-      {
-        name: 'get_forecast',
-        description: 'Get 5-day weather forecast for a city',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            city: { type: 'string', description: 'The city name' },
-            days: { type: 'number', description: 'Number of days (1-5)', default: 5 },
-          },
-          required: ['city'],
-        },
-      },
-    ],
-  };
-});
-
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  switch (request.params.name) {
-    case 'get_weather':
-      const { city } = request.params.arguments as { city: string };
-      return {
-        content: [{ type: 'text', text: \`Weather in \${city}: 72°F, sunny\` }],
-      };
-    case 'get_forecast':
-      const { city: forecastCity } = request.params.arguments as { city: string };
-      return {
-        content: [{ type: 'text', text: \`5-day forecast for \${forecastCity}: Mostly sunny\` }],
-      };
-    default:
-      throw new Error(\`Unknown tool: \${request.params.name}\`);
-  }
-});
-
-const transport = new StdioServerTransport();
-server.connect(transport);`,
-      "package.json": `{
-  "name": "weather-mcp-server",
-  "version": "0.1.0",
-  "description": "Weather MCP Server",
-  "main": "dist/server.js",
-  "scripts": {
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "tsx src/server.ts"
-  },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^0.1.0",
-    "zod": "^3.22.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0"
-  }
-}`,
-      "README.md": `# Weather MCP Server
-
-A Model Context Protocol server that provides weather information tools.
-
-## Installation
-
-\`\`\`bash
-npm install
-npm run build
-\`\`\`
-
-## Usage
-
-\`\`\`bash
-npm start
-\`\`\`
-
-## Tools
-
-- **get_weather**: Get current weather conditions
-- **get_forecast**: Get 5-day weather forecast
-
-## Testing
-
-\`\`\`bash
-echo &apos;{"jsonrpc":"2.0","id":1,"method":"tools/list"}&apos; | npm start
-\`\`\`
-`
-    };
-  };
   const handleTestServer = async () => {
     if (!serverStarted) {
       // Start server and generate API key
@@ -309,13 +188,7 @@ echo &apos;{"jsonrpc":"2.0","id":1,"method":"tools/list"}&apos; | npm start
       setServerStarted(false);
       setShowIdeConfig(false);
       setTestOutput("Development server stopped.\n");
-      setApiKey("");
-    }
-  };
-
-  const generateApiKey = () => {
-    const newApiKey = 'mcp_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-    setApiKey(newApiKey);
+      setApiKey("");    }
   };
 
   const getIdeConfig = () => {
@@ -424,9 +297,8 @@ npm run build
                             <Sparkles className="w-4 h-4 text-primary" />
                           </div>
                           <CardTitle className="text-lg">Create Your MCP Server</CardTitle>
-                        </div>
-                        <CardDescription>
-                          Describe what your MCP server should do, and we'll generate it for you.
+                        </div>                        <CardDescription>
+                          Describe what your MCP server should do, and we&apos;ll generate it for you.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-6">                      <div className="space-y-2">
