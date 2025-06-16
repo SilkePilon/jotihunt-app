@@ -41,7 +41,7 @@ export default function RootLayout({
             <div className="min-h-screen">
               {children}
             </div>
-            <Toaster />
+            <Toaster expand={false} closeButton position="bottom-right" />
           </ClerkThemeProvider>
         </ThemeProvider>
       </body>
