@@ -839,7 +839,7 @@ export default function MCPServerGeneratorPage() {
                                       Create and manage your API keys
                                     </p>
                                   </div>
-                                  
+
                                   {/* Create New Key */}
                                   <div className="space-y-3 border-t pt-3">
                                     <div className="space-y-2">
@@ -924,7 +924,29 @@ export default function MCPServerGeneratorPage() {
                                               <div className="text-xs text-muted-foreground">
                                                 Created {key.createdAt.toLocaleDateString()}
                                               </div>                                              <div className="font-mono text-xs bg-background rounded p-2 break-all border">
-                                                {visibleKeys.has(key.id) ? key.key : '•'.repeat(key.key.length)}
+                                                <AnimatePresence mode="wait">
+                                                  {visibleKeys.has(key.id) ? (
+                                                    <motion.span
+                                                      key="visible"
+                                                      initial={{ opacity: 0, scale: 0.9 }}
+                                                      animate={{ opacity: 1, scale: 1 }}
+                                                      exit={{ opacity: 0, scale: 0.9 }}
+                                                      transition={{ duration: 0.2 }}
+                                                    >
+                                                      {key.key}
+                                                    </motion.span>
+                                                  ) : (
+                                                    <motion.span
+                                                      key="hidden"
+                                                      initial={{ opacity: 0, scale: 0.9 }}
+                                                      animate={{ opacity: 1, scale: 1 }}
+                                                      exit={{ opacity: 0, scale: 0.9 }}
+                                                      transition={{ duration: 0.2 }}
+                                                    >
+                                                      {'•'.repeat(key.key.length)}
+                                                    </motion.span>
+                                                  )}
+                                                </AnimatePresence>
                                               </div>
                                             </motion.div>
                                           ))}
