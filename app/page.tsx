@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key, Copy, Trash2, Eye, EyeOff, BarChart3, TrendingUp, Calendar, Users, Activity } from "lucide-react"
+import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key, Trash2, Eye, EyeOff, BarChart3, TrendingUp, Calendar, Users, Activity } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CopyButton } from "@/components/animate-ui/buttons/copy"
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area, CartesianGrid } from "recharts"
+import { XAxis, AreaChart, Area, CartesianGrid } from "recharts"
 
 import { PlaygroundNavbar } from "@/components/playground-navbar"
 import { CodeTabs } from "@/components/animate-ui/components/code-tabs"
@@ -39,7 +39,6 @@ export default function MCPServerGeneratorPage() {
   const [apiKey, setApiKey] = useState("")
   const [showIdeConfig, setShowIdeConfig] = useState(false)
   const [apiKeys, setApiKeys] = useState<Array<{ id: string, name: string, key: string, createdAt: Date, lastUsed?: Date, usageCount?: number }>>([])
-  const [showApiKeyPopover, setShowApiKeyPopover] = useState(false)
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false)
   const [newApiKeyName, setNewApiKeyName] = useState("")
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
@@ -380,9 +379,6 @@ export default function MCPServerGeneratorPage() {
       color: "var(--chart-2)",
     },
   } satisfies ChartConfig
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
 
   const handleRemoveTag = (toolName: string) => {
     const tagRegex = new RegExp(`@${toolName}\\b`, 'g')
