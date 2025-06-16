@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { useUser } from "@clerk/nextjs"
 import { ModeToggle } from "@/components/mode-toggle"
 import { PresetSave } from "@/components/preset-save"
 import { PresetSelector } from "@/components/preset-selector"
@@ -8,6 +10,7 @@ import { PresetShare } from "@/components/preset-share"
 import { CodeViewer } from "@/components/code-viewer"
 import { GitHubStarsButton } from "@/components/animate-ui/buttons/github-stars"
 import { AccountButton } from "@/components/account-button"
+import { AuthPrompt } from "@/components/auth-prompt"
 import { Preset } from "@/app/data/presets"
 
 interface PlaygroundNavbarProps {
@@ -16,6 +19,7 @@ interface PlaygroundNavbarProps {
 
 export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
     const [showGitHubStars, setShowGitHubStars] = useState(true)
+    const { isSignedIn, isLoaded } = useUser()
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
@@ -47,8 +51,50 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             className="mr-4"
                         />
                     )}
-                        <PresetSelector presets={presets} />
-                        <PresetSave />
+                          {/* Authenticated user components with animation */}
+                        <AnimatePresence mode="wait">
+                            {isLoaded && isSignedIn && (
+                                <motion.div
+                                    key="auth-components"
+                                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
+                                    transition={{ 
+                                        duration: 0.4,
+                                        ease: "easeOut",
+                                        staggerChildren: 0.1
+                                    }}
+                                    className="flex items-center space-x-1.5"
+                                >
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.1 }}
+                                    >
+                                        <PresetSelector presets={presets} />
+                                    </motion.div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.2 }}
+                                    >
+                                        <PresetSave />
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                            {isLoaded && !isSignedIn && (
+                                <motion.div
+                                    key="auth-prompt"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 20 }}
+                                    transition={{ duration: 0.3, ease: "easeOut" }}
+                                >
+                                    <AuthPrompt />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <div className="hidden space-x-1.5 md:flex flex-shrink-0">
                             <CodeViewer />
                             <PresetShare />

@@ -8,19 +8,28 @@ export function SimpleAuthHandler() {
     const { user, isSignedIn, isLoaded } = useUser()
 
     useEffect(() => {
-        if (!isLoaded) return
-
-        // Check if this is the first time loading after sign in
+        if (!isLoaded) return        // Check if this is the first time loading after sign in
         const hasJustSignedIn = localStorage.getItem('clerk-sign-in-pending')
-
+        
         if (hasJustSignedIn && isSignedIn && user) {
             // Clear the flag
             localStorage.removeItem('clerk-sign-in-pending')
 
-            // Show welcome toast
-            toast.success("Welcome!", {
-                description: `Successfully signed in as ${user.fullName || user.username || user.emailAddresses?.[0]?.emailAddress}`,
-            })
+            // Small delay to let the UI settle and animations show
+            setTimeout(() => {
+                // Show welcome toast
+                toast.success("Welcome!", {
+                    description: `Successfully signed in as ${user.fullName || user.username || user.emailAddresses?.[0]?.emailAddress}`,
+                    action: {
+                        label: "✨ Features unlocked",
+                        onClick: () => {
+                            toast.info("New features available!", {
+                                description: "You can now save and load MCP server presets"
+                            })
+                        },
+                    },
+                })
+            }, 600) // Wait for animations to complete
         }
 
         // Check if user just signed out
