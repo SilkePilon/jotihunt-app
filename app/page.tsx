@@ -617,13 +617,12 @@ export default function MCPServerGeneratorPage() {
         </Sidebar>        {/* Main Content */}
         <SidebarInset>
           <TooltipProvider>
-            <div className="min-h-screen bg-background">
-              <div className="hidden min-h-screen flex-col md:flex">
+            <div className="min-h-screen bg-background">              <div className="hidden min-h-screen flex-col md:flex">
                 {/* Navbar with matching card styling */}
                 <PlaygroundNavbar presets={presets} />
 
                 {/* Main content with card-based layout matching navbar style */}
-                <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-6">
+                <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
                   <div className="w-full space-y-6">
 
                     {/* Hero Section
