@@ -26,12 +26,9 @@ import {
   Bot,
   Settings2,
   SquareTerminal,
-  FileText,
   Users,
   Shield,
   Database,
-  Activity,
-  Home,
   ChevronRight,
   LogOut,
   CreditCard,
@@ -58,7 +55,6 @@ import { presets } from "./data/presets"
 import {
   SidebarProvider,
   SidebarInset,
-  SidebarTrigger,
   Sidebar,
   SidebarHeader,
   SidebarContent,
@@ -109,9 +105,8 @@ export default function MCPServerGeneratorPage() {
   const [showApiKeyPopover, setShowApiKeyPopover] = useState(false)
   const [newApiKeyName, setNewApiKeyName] = useState("")
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
-  
-  const isMobile = useIsMobile()
-  const { user, isSignedIn, isLoaded } = useUser()
+    const isMobile = useIsMobile()
+  const { user, isSignedIn } = useUser()
 
   // Sidebar data structure with dynamic user data
   const sidebarData = {
@@ -1542,44 +1537,47 @@ export default function MCPServerGeneratorPage() {
                                 </AnimatePresence>
                               </div>                        {/* Start/Stop Server Button directly under header */}
                               <div className="mt-4">
-                                {serverStarted ? (                                  <motion.div
-                                    className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors"
-                                    whileHover={{ scale: 1.01 }}
+                                {serverStarted ? (
+                                  <motion.div
+                                    whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
+                                    className="group"
                                   >
                                     <Button
                                       variant="outline"
                                       onClick={handleTestServer}
-                                      className="w-full justify-start"
+                                      className="w-full h-16 justify-start gap-3 hover:bg-muted/50 transition-all duration-200"
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded mr-3">
-                                        <X className="w-3 h-3 text-muted-foreground" />
+                                      <div className="flex items-center justify-center w-10 h-10 bg-muted/30 rounded-lg group-hover:bg-muted/50 transition-colors">
+                                        <X className="w-4 h-4 text-muted-foreground" />
                                       </div>
                                       <div className="text-left">
-                                        <div className="font-medium">Stop Server</div>
-                                        <div className="text-xs text-muted-foreground">Terminate local instance</div>
+                                        <div className="font-medium text-foreground">Stop Server</div>
+                                        <div className="text-sm text-muted-foreground">Terminate local development instance</div>
                                       </div>
                                     </Button>
                                   </motion.div>
-                                ) : (                                  <motion.div
-                                    className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors"
-                                    whileHover={{ scale: 1.01 }}
+                                ) : (
+                                  <motion.div
+                                    whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
-                                  ><Button
+                                    className="group"
+                                  >
+                                    <Button
                                       variant="outline"
                                       onClick={handleTestServer}
                                       disabled={isTestingServer}
-                                      className="w-full justify-start"
+                                      className="w-full h-16 justify-start gap-3 hover:bg-muted/50 transition-all duration-200"
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded mr-3">
-                                        <Rocket className="w-3 h-3 text-muted-foreground" />
+                                      <div className="flex items-center justify-center w-10 h-10 bg-muted/30 rounded-lg group-hover:bg-muted/50 transition-colors">
+                                        <Rocket className="w-4 h-4 text-muted-foreground" />
                                       </div>
                                       <div className="text-left">
-                                        <div className="font-medium">
-                                          {isTestingServer ? "Starting..." : "Start Server"}
+                                        <div className="font-medium text-foreground">
+                                          {isTestingServer ? "Starting Server..." : "Start Server"}
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
-                                          {isTestingServer ? "Initializing environment" : "Launch local development server"}
+                                        <div className="text-sm text-muted-foreground">
+                                          {isTestingServer ? "Initializing development environment" : "Launch local development server"}
                                         </div>
                                       </div>
                                     </Button>
