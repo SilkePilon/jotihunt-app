@@ -965,13 +965,12 @@ export default function MCPServerGeneratorPage() {
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
                                         className="space-y-4"
-                                      >
-                                        <div className="flex items-center justify-between">
+                                      >                                        <div className="flex items-center justify-between">
                                           <div className="flex items-center space-x-2">
-                                            <CheckCircle className="w-4 h-4 text-green-500" />
+                                            <CheckCircle className="w-4 h-4 text-muted-foreground" />
                                             <h4 className="text-sm font-medium text-foreground">Generated Tools</h4>
                                           </div>
-                                          <Badge variant="secondary" className="text-xs">3 tools</Badge>
+                                          <span className="text-xs text-muted-foreground">3 tools</span>
                                         </div>
 
                                         {/* Tool Cards */}
@@ -982,17 +981,15 @@ export default function MCPServerGeneratorPage() {
                                           className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
                                         >
                                           <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">
-                                              <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                                                <Globe className="w-4 h-4 text-blue-500" />
+                                            <div className="flex items-center space-x-3">                                              <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
+                                                <Globe className="w-4 h-4 text-muted-foreground" />
                                               </div>
                                               <div>
                                                 <h5 className="text-sm font-medium">get_weather</h5>
                                                 <p className="text-xs text-muted-foreground">Get current weather conditions</p>
                                               </div>
                                             </div>
-                                            <div className="flex items-center space-x-2">
-                                              <Button
+                                            <div className="flex items-center space-x-2">                                              <Button
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-7 px-2"
@@ -1000,7 +997,7 @@ export default function MCPServerGeneratorPage() {
                                               >
                                                 <Edit className="w-3 h-3" />
                                               </Button>
-                                              <Badge variant="outline" className="text-xs">Tool</Badge>
+                                              <span className="text-xs text-muted-foreground">Tool</span>
                                             </div>
                                           </div>
                                           <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
@@ -1014,17 +1011,15 @@ export default function MCPServerGeneratorPage() {
                                           className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
                                         >
                                             <div className="flex items-center justify-between">
-                                              <div className="flex items-center space-x-3">
-                                                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                                                  <Zap className="w-4 h-4 text-green-500" />
+                                              <div className="flex items-center space-x-3">                                                <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
+                                                  <Zap className="w-4 h-4 text-muted-foreground" />
                                                 </div>
                                                 <div>
                                                   <h5 className="text-sm font-medium">get_forecast</h5>
                                                   <p className="text-xs text-muted-foreground">Get 5-day weather forecast</p>
                                                 </div>
                                               </div>
-                                              <div className="flex items-center space-x-2">
-                                                <Button
+                                              <div className="flex items-center space-x-2">                                                <Button
                                                   variant="ghost"
                                                   size="sm"
                                                   className="h-7 px-2"
@@ -1032,7 +1027,7 @@ export default function MCPServerGeneratorPage() {
                                                 >
                                                   <Edit className="w-3 h-3" />
                                                 </Button>
-                                                <Badge variant="outline" className="text-xs">Tool</Badge>
+                                                <span className="text-xs text-muted-foreground">Tool</span>
                                               </div>
                                             </div>
                                             <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
@@ -1046,17 +1041,15 @@ export default function MCPServerGeneratorPage() {
                                             className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
                                           >
                                             <div className="flex items-center justify-between">
-                                              <div className="flex items-center space-x-3">
-                                                <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                                                  <Server className="w-4 h-4 text-purple-500" />
+                                              <div className="flex items-center space-x-3">                                                <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
+                                                  <Server className="w-4 h-4 text-muted-foreground" />
                                                 </div>
                                                 <div>
                                                   <h5 className="text-sm font-medium">list_locations</h5>
                                                   <p className="text-xs text-muted-foreground">Search for weather locations</p>
                                                 </div>
                                               </div>
-                                              <div className="flex items-center space-x-2">
-                                                <Button
+                                              <div className="flex items-center space-x-2">                                                <Button
                                                   variant="ghost"
                                                   size="sm"
                                                   className="h-7 px-2"
@@ -1064,7 +1057,7 @@ export default function MCPServerGeneratorPage() {
                                                 >
                                                   <Edit className="w-3 h-3" />
                                                 </Button>
-                                                <Badge variant="outline" className="text-xs">Tool</Badge>
+                                                <span className="text-xs text-muted-foreground">Tool</span>
                                               </div>
                                             </div>
                                             <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
@@ -1084,18 +1077,17 @@ export default function MCPServerGeneratorPage() {
                                             <div className="flex items-center space-x-2 mb-2">
                                               <Code className="w-3 h-3 text-muted-foreground" />
                                               <h5 className="text-xs font-medium text-muted-foreground">Test Coverage</h5>
-                                            </div>
-                                            <div className="grid grid-cols-3 gap-2 text-xs">
-                                              <div className="text-center p-2 bg-green-500/10 rounded">
-                                                <div className="font-medium text-green-600">95%</div>
+                                            </div>                                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                              <div className="text-center p-2 bg-muted/20 rounded">
+                                                <div className="font-medium text-foreground">95%</div>
                                                 <div className="text-muted-foreground">Coverage</div>
                                               </div>
-                                              <div className="text-center p-2 bg-blue-500/10 rounded">
-                                                <div className="font-medium text-blue-600">12</div>
+                                              <div className="text-center p-2 bg-muted/20 rounded">
+                                                <div className="font-medium text-foreground">12</div>
                                                 <div className="text-muted-foreground">Tests</div>
                                               </div>
-                                              <div className="text-center p-2 bg-purple-500/10 rounded">
-                                                <div className="font-medium text-purple-600">0</div>
+                                              <div className="text-center p-2 bg-muted/20 rounded">
+                                                <div className="font-medium text-foreground">0</div>
                                                 <div className="text-muted-foreground">Failures</div>
                                               </div>
                                             </div>
@@ -1157,14 +1149,13 @@ export default function MCPServerGeneratorPage() {
                                   whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
                                   className="group"
-                                >
-                                  <Button
+                                >                                  <Button
                                     variant="outline"
-                                    className="h-20 w-full flex-col gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
                                     onClick={() => {/* Install locally functionality */ }}
                                   >
-                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                                      <Download className="w-4 h-4 text-blue-600" />
+                                    <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
+                                      <Download className="w-4 h-4" />
                                     </div>
                                     <div className="text-center">
                                       <div className="text-sm font-medium">Install</div>
@@ -1176,14 +1167,13 @@ export default function MCPServerGeneratorPage() {
                                   whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
                                   className="group"
-                                >
-                                  <Button
+                                >                                  <Button
                                     variant="outline"
-                                    className="h-20 w-full flex-col gap-2 hover:bg-green-50 hover:border-green-200 transition-all duration-200"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
                                     onClick={() => {/* Deploy to cloud functionality */ }}
                                   >
-                                    <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                                      <Globe className="w-4 h-4 text-green-600" />
+                                    <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
+                                      <Globe className="w-4 h-4" />
                                     </div>
                                     <div className="text-center">
                                       <div className="text-sm font-medium">Deploy</div>
@@ -1194,15 +1184,14 @@ export default function MCPServerGeneratorPage() {
                                   whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
                                   className="group col-span-2"
-                                >
-                                  <Popover open={showApiKeyPopover} onOpenChange={setShowApiKeyPopover}>
+                                >                                  <Popover open={showApiKeyPopover} onOpenChange={setShowApiKeyPopover}>
                                     <PopoverTrigger asChild>
                                       <Button
                                         variant="outline"
-                                        className="h-20 w-full flex-col gap-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-200"
+                                        className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
                                       >
-                                        <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
-                                          <Key className="w-4 h-4 text-purple-600" />
+                                        <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
+                                          <Key className="w-4 h-4" />
                                         </div>
                                         <div className="text-center">
                                           <div className="text-sm font-medium">API Key Management</div>
@@ -1351,14 +1340,13 @@ export default function MCPServerGeneratorPage() {
                                   whileHover={{ scale: 1.02 }}
                                   whileTap={{ scale: 0.98 }}
                                   className="group col-span-2"
-                                >
-                                  <Button
+                                >                                  <Button
                                     variant="outline"
-                                    className="h-20 w-full flex-col gap-2 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
                                     onClick={() => {/* Share with community functionality */ }}
                                   >
-                                    <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
-                                      <Share2 className="w-4 h-4 text-orange-600" />
+                                    <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
+                                      <Share2 className="w-4 h-4" />
                                     </div>
                                     <div className="text-center">
                                       <div className="text-sm font-medium">Share with Community</div>
@@ -1395,8 +1383,7 @@ export default function MCPServerGeneratorPage() {
                                       initial={{ opacity: 0, scale: 0 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 0 }}
-                                    >
-                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                    >                                      <Badge variant="secondary" className="text-xs">
                                         <CheckCircle className="w-3 h-3 mr-1" />
                                         Ready
                                       </Badge>
@@ -1420,13 +1407,9 @@ export default function MCPServerGeneratorPage() {
                                       <span className="text-sm font-medium">Status</span>
                                       <p className="text-xs text-muted-foreground">Current generation state</p>
                                     </div>
-                                  </div>
-                                  <Badge
+                                  </div>                                  <Badge
                                     variant={isGenerating ? "default" : isGenerated ? "secondary" : "outline"}
-                                    className={`text-xs ${isGenerating ? "bg-blue-100 text-blue-700 border-blue-200" :
-                                      isGenerated ? "bg-green-100 text-green-700 border-green-200" :
-                                        "bg-gray-100 text-gray-600 border-gray-200"
-                                      }`}
+                                    className="text-xs"
                                   >
                                     {isGenerating && (
                                       <motion.div
@@ -1448,10 +1431,9 @@ export default function MCPServerGeneratorPage() {
                                 <motion.div
                                   className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
                                   whileHover={{ scale: 1.01 }}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded">
-                                      <Code className="w-3 h-3 text-green-600" />
+                                >                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
+                                      <Code className="w-3 h-3" />
                                     </div>
                                     <div>
                                       <span className="text-sm font-medium">Runtime</span>
@@ -1467,10 +1449,9 @@ export default function MCPServerGeneratorPage() {
                                 <motion.div
                                   className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
                                   whileHover={{ scale: 1.01 }}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded">
-                                      <Globe className="w-3 h-3 text-blue-600" />
+                                >                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
+                                      <Globe className="w-3 h-3" />
                                     </div>
                                     <div>
                                       <span className="text-sm font-medium">Protocol</span>
@@ -1486,10 +1467,9 @@ export default function MCPServerGeneratorPage() {
                                 <motion.div
                                   className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
                                   whileHover={{ scale: 1.01 }}
-                                >
-                                  <div className="flex items-center space-x-3">
-                                    <div className="flex items-center justify-center w-6 h-6 bg-purple-100 rounded">
-                                      <Zap className="w-3 h-3 text-purple-600" />
+                                >                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
+                                      <Zap className="w-3 h-3" />
                                     </div>
                                     <div>
                                       <span className="text-sm font-medium">Version</span>
@@ -1509,18 +1489,17 @@ export default function MCPServerGeneratorPage() {
                                   animate={{ opacity: 1, height: "auto" }}
                                   transition={{ delay: 0.2 }}
                                   className="pt-4 border-t"
-                                >
-                                  <div className="flex items-center gap-2 mb-3">
+                                >                                  <div className="flex items-center gap-2 mb-3">
                                     <span className="text-xs font-medium text-muted-foreground">Performance</span>
-                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <div className="w-2 h-2 rounded-full bg-muted"></div>
                                   </div>
                                   <div className="grid grid-cols-2 gap-3">
                                     <div className="text-center p-2 rounded-lg bg-muted/50">
-                                      <div className="text-lg font-semibold text-green-600">99.9%</div>
+                                      <div className="text-lg font-semibold">99.9%</div>
                                       <div className="text-xs text-muted-foreground">Uptime</div>
                                     </div>
                                     <div className="text-center p-2 rounded-lg bg-muted/50">
-                                      <div className="text-lg font-semibold text-blue-600">&lt;50ms</div>
+                                      <div className="text-lg font-semibold">&lt;50ms</div>
                                       <div className="text-xs text-muted-foreground">Response</div>
                                     </div>
                                   </div>
@@ -1554,9 +1533,8 @@ export default function MCPServerGeneratorPage() {
                                       initial={{ opacity: 0, scale: 0 }}
                                       animate={{ opacity: 1, scale: 1 }}
                                       exit={{ opacity: 0, scale: 0 }}
-                                    >
-                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+                                    >                                      <Badge variant="secondary" className="text-xs">
+                                        <div className="w-2 h-2 rounded-full bg-foreground mr-1"></div>
                                         Running
                                       </Badge>
                                     </motion.div>
@@ -1564,46 +1542,43 @@ export default function MCPServerGeneratorPage() {
                                 </AnimatePresence>
                               </div>                        {/* Start/Stop Server Button directly under header */}
                               <div className="mt-4">
-                                {serverStarted ? (
-                                  <motion.div
-                                    className="p-3 rounded-lg border bg-red-50 hover:bg-red-100 transition-colors"
+                                {serverStarted ? (                                  <motion.div
+                                    className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors"
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.98 }}
                                   >
                                     <Button
                                       variant="outline"
                                       onClick={handleTestServer}
-                                      className="w-full justify-start border-red-200 text-red-700 hover:bg-red-100"
+                                      className="w-full justify-start"
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-red-100 rounded mr-3">
-                                        <X className="w-3 h-3 text-red-600" />
+                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded mr-3">
+                                        <X className="w-3 h-3 text-muted-foreground" />
                                       </div>
                                       <div className="text-left">
                                         <div className="font-medium">Stop Server</div>
-                                        <div className="text-xs text-red-600">Terminate local instance</div>
+                                        <div className="text-xs text-muted-foreground">Terminate local instance</div>
                                       </div>
                                     </Button>
                                   </motion.div>
-                                ) : (
-                                  <motion.div
-                                    className="p-3 rounded-lg border bg-green-50 hover:bg-green-100 transition-colors"
+                                ) : (                                  <motion.div
+                                    className="p-3 rounded-lg border bg-muted/20 hover:bg-muted/40 transition-colors"
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.98 }}
-                                  >
-                                    <Button
+                                  ><Button
                                       variant="outline"
                                       onClick={handleTestServer}
                                       disabled={isTestingServer}
-                                      className="w-full justify-start border-green-200 text-green-700 hover:bg-green-100"
+                                      className="w-full justify-start"
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded mr-3">
-                                        <Rocket className="w-3 h-3 text-green-600" />
+                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded mr-3">
+                                        <Rocket className="w-3 h-3 text-muted-foreground" />
                                       </div>
                                       <div className="text-left">
                                         <div className="font-medium">
                                           {isTestingServer ? "Starting..." : "Start Server"}
                                         </div>
-                                        <div className="text-xs text-green-600">
+                                        <div className="text-xs text-muted-foreground">
                                           {isTestingServer ? "Initializing environment" : "Launch local development server"}
                                         </div>
                                       </div>
@@ -1636,7 +1611,7 @@ export default function MCPServerGeneratorPage() {
                                   className="bg-muted/50 rounded-lg p-3"
                                 >
                                   <div className="flex items-center gap-2 mb-2">
-                                    <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500 animate-pulse"}`}></div>
+                                    <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-foreground" : "bg-muted-foreground animate-pulse"}`}></div>
                                     <span className="text-xs font-medium text-muted-foreground">
                                       {isTestingServer ? "Starting..." : serverStarted ? "Server Running" : "Server Output"}
                                     </span>
@@ -1663,21 +1638,20 @@ export default function MCPServerGeneratorPage() {
                                     <Zap className="w-3 h-3 text-primary" />
                                   </div>
                                   <span className="text-sm font-medium">Quick Actions</span>
-                                  <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500"}`}></div>
+                                  <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-foreground" : "bg-muted-foreground"}`}></div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                   <motion.div
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     className="group"
-                                  >
-                                    <Button
+                                  >                                    <Button
                                       variant="outline"
-                                      className="h-16 w-full flex-col gap-1 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
+                                      className="h-16 w-full flex-col gap-1 hover:bg-muted/50 transition-all duration-200"
                                       onClick={() => {/* Download functionality */ }}
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded group-hover:bg-blue-200 transition-colors">
-                                        <Download className="w-3 h-3 text-blue-600" />
+                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded group-hover:bg-muted/40 transition-colors">
+                                        <Download className="w-3 h-3 text-muted-foreground" />
                                       </div>
                                       <div className="text-center">
                                         <div className="text-xs font-medium">Download</div>
@@ -1689,14 +1663,13 @@ export default function MCPServerGeneratorPage() {
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                     className="group"
-                                  >
-                                    <Button
+                                  >                                    <Button
                                       variant="outline"
-                                      className="h-16 w-full flex-col gap-1 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200"
+                                      className="h-16 w-full flex-col gap-1 hover:bg-muted/50 transition-all duration-200"
                                       onClick={() => {/* Share functionality */ }}
                                     >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-orange-100 rounded group-hover:bg-orange-200 transition-colors">
-                                        <Share2 className="w-3 h-3 text-orange-600" />
+                                      <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded group-hover:bg-muted/40 transition-colors">
+                                        <Share2 className="w-3 h-3 text-muted-foreground" />
                                       </div>
                                       <div className="text-center">
                                         <div className="text-xs font-medium">Share</div>
