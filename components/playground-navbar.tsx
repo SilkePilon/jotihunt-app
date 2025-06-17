@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useUser } from "@clerk/nextjs"
+import { Key } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { ModeToggle } from "@/components/mode-toggle"
 import { PresetSave } from "@/components/preset-save"
 import { PresetSelector } from "@/components/preset-selector"
@@ -11,6 +13,14 @@ import { CodeViewer } from "@/components/code-viewer"
 import { GitHubStarsButton } from "@/components/animate-ui/buttons/github-stars"
 import { AccountButton } from "@/components/account-button"
 import { AuthPrompt } from "@/components/auth-prompt"
+import { SidebarTrigger } from "@/components/animate-ui/radix/sidebar"
+import { Separator } from "@/components/ui/separator"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { Preset } from "@/app/data/presets"
 
 interface PlaygroundNavbarProps {
@@ -22,10 +32,12 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
     const { isSignedIn, isLoaded } = useUser()
 
     return (
-        <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
-            <div className="bg-card border rounded-2xl shadow-sm">
-                <div className="flex items-center justify-between px-4 py-2.5">
+        <TooltipProvider>
+            <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
+            <div className="bg-card border rounded-2xl shadow-sm">                <div className="flex items-center justify-between px-4 py-2.5">
                     <div className="flex items-center space-x-2">
+                        <SidebarTrigger className="h-7 w-7" />
+                        <Separator orientation="vertical" className="h-4" />
                         <div className="flex items-center justify-center w-7 h-7 bg-primary rounded-lg">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -41,7 +53,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             </svg>
                         </div>
                         <h1 className="text-base font-semibold">Playground</h1>
-                    </div>                    <div className="flex items-center space-x-1.5 flex-shrink-0">                        {showGitHubStars && (
+                    </div><div className="flex items-center space-x-1.5 flex-shrink-0">                        {showGitHubStars && (
                         <GitHubStarsButton
                             username="SilkePilon"
                             repo="mcp.silkepilon.dev"
@@ -72,13 +84,34 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                                         transition={{ delay: 0.1 }}
                                     >
                                         <PresetSelector presets={presets} />
-                                    </motion.div>
-                                    <motion.div
+                                    </motion.div>                                    <motion.div
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: 0.2 }}
                                     >
                                         <PresetSave />
+                                    </motion.div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: 0.3 }}
+                                    >
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 px-3"
+                                                    onClick={() => {/* API Settings functionality */}}
+                                                >
+                                                    <Key className="h-4 w-4 mr-2" />
+                                                    API
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>API Settings & Keys</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </motion.div>
                                 </motion.div>
                             )}
@@ -102,11 +135,11 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                         <ModeToggle />
                         <div className="flex items-center px-3">
                             <div className="w-1 h-1 bg-border rounded-full"></div>
-                        </div>
-                        <AccountButton />
+                        </div>                        <AccountButton />
                     </div>
                 </div>
             </div>
         </div>
+        </TooltipProvider>
     )
 }

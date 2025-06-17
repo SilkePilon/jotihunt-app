@@ -2,7 +2,41 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Zap, Globe, Download, Share2, Code, Plus, X, Link, Sparkles, Server, Rocket, Clock, CheckCircle, Edit, Key, Trash2, Eye, EyeOff } from "lucide-react"
+import { useUser } from "@clerk/nextjs"
+import {
+  Zap,
+  Globe,
+  Download,
+  Share2,
+  Code,
+  Plus,
+  X,
+  Link,
+  Sparkles,
+  Server,
+  Rocket,
+  Clock,
+  CheckCircle,
+  Edit,
+  Key,
+  Trash2,
+  Eye,
+  EyeOff,
+  BookOpen,
+  Bot,
+  Settings2,
+  SquareTerminal,
+  FileText,
+  Users,
+  Shield,
+  Database,
+  Activity,
+  Home,
+  ChevronRight,
+  LogOut,
+  CreditCard,
+  Bell
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,10 +49,46 @@ import { Switch } from "@/components/animate-ui/base/switch"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { CopyButton } from "@/components/animate-ui/buttons/copy"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 import { PlaygroundNavbar } from "@/components/playground-navbar"
 import { CodeTabs } from "@/components/animate-ui/components/code-tabs"
 import { presets } from "./data/presets"
+
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+  Sidebar,
+  SidebarHeader,
+  SidebarContent,
+  SidebarFooter,
+  SidebarRail,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+} from "@/components/animate-ui/radix/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/animate-ui/radix/collapsible"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/animate-ui/radix/dropdown-menu"
+
+import { useIsMobile } from "@/hooks/use-mobile"
 
 export default function MCPServerGeneratorPage() {
   const [urls, setUrls] = useState<string[]>([""])
@@ -39,6 +109,119 @@ export default function MCPServerGeneratorPage() {
   const [showApiKeyPopover, setShowApiKeyPopover] = useState(false)
   const [newApiKeyName, setNewApiKeyName] = useState("")
   const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
+  
+  const isMobile = useIsMobile()
+  const { user, isSignedIn, isLoaded } = useUser()
+
+  // Sidebar data structure with dynamic user data
+  const sidebarData = {
+    user: {
+      name: isSignedIn && user ? (user.fullName || user.firstName || "User") : "Guest",
+      email: isSignedIn && user ? (user.primaryEmailAddress?.emailAddress || "guest@local") : "guest@local",
+      avatar: isSignedIn && user ? user.imageUrl : "/api/placeholder/32/32",
+    },
+    navMain: [
+      {
+        title: "Generator",
+        url: "#",
+        icon: SquareTerminal,
+        isActive: true,
+        items: [
+          {
+            title: "New Server",
+            url: "#",
+          },
+          {
+            title: "Templates",
+            url: "#",
+          },
+          {
+            title: "History",
+            url: "#",
+          },
+        ],
+      },
+      {
+        title: "Documentation",
+        url: "#",
+        icon: BookOpen,
+        items: [
+          {
+            title: "Getting Started",
+            url: "#",
+          },
+          {
+            title: "API Reference",
+            url: "#",
+          },
+          {
+            title: "Examples",
+            url: "#",
+          },
+          {
+            title: "Best Practices",
+            url: "#",
+          },
+        ],
+      },
+      {
+        title: "Testing",
+        url: "#",
+        icon: Bot,
+        items: [
+          {
+            title: "Local Testing",
+            url: "#",
+          },
+          {
+            title: "Unit Tests",
+            url: "#",
+          },
+          {
+            title: "Integration",
+            url: "#",
+          },
+        ],
+      },
+      {
+        title: "Settings",
+        url: "#",
+        icon: Settings2,
+        items: [
+          {
+            title: "General",
+            url: "#",
+          },
+          {
+            title: "API Keys",
+            url: "#",
+          },
+          {
+            title: "Preferences",
+            url: "#",
+          },
+        ],
+      },
+    ],
+    projects: [
+      {
+        name: "Weather Server",
+        url: "#",
+        icon: Globe,
+      },
+      {
+        name: "Database Tools",
+        url: "#",
+        icon: Database,
+      },
+      {
+        name: "Auth Handler",
+        url: "#",
+        icon: Shield,
+      },
+    ],
+  }
+
   // Available tools for autocomplete
   const availableTools = [
     { name: 'get_weather', icon: Globe, description: 'Get current weather conditions' },
@@ -255,19 +438,195 @@ export default function MCPServerGeneratorPage() {
     const tagRegex = new RegExp(`@${toolName}\\b`, 'g')
     setPromptText(prev => prev.replace(tagRegex, '').replace(/\s+/g, ' ').trim())
   }
-
   return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-background">
-        <div className="hidden min-h-screen flex-col md:flex">
-          {/* Navbar with matching card styling */}
-          <PlaygroundNavbar presets={presets} />
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        {/* Sidebar */}
+        <Sidebar variant="floating" collapsible="icon">
+          <SidebarHeader>
+            {/* Logo/Brand */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <Server className="size-4" />
+                  </div>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">MCP Generator</span>
+                    <span className="truncate text-xs">Server Builder</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarHeader>
 
-          {/* Main content with card-based layout matching navbar style */}
-          <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-6">
-            <div className="w-full space-y-6">
+          <SidebarContent>
+            {/* Navigation */}
+            <SidebarGroup>
+              <SidebarGroupLabel>Platform</SidebarGroupLabel>
+              <SidebarMenu>
+                {sidebarData.navMain.map((item) => (
+                  <Collapsible
+                    key={item.title}
+                    asChild
+                    defaultOpen={item.isActive}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip={item.title}>
+                          {item.icon && <item.icon />}
+                          <span>{item.title}</span>
+                          <ChevronRight className="ml-auto transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.items?.map((subItem) => (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton asChild>
+                                <a href={subItem.url}>
+                                  <span>{subItem.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ))}
+              </SidebarMenu>
+            </SidebarGroup>
 
-              {/* Hero Section
+            {/* Projects */}
+            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+              <SidebarGroupLabel>Recent Projects</SidebarGroupLabel>
+              <SidebarMenu>
+                {sidebarData.projects.map((item) => (
+                  <SidebarMenuItem key={item.name}>
+                    <SidebarMenuButton asChild>
+                      <a href={item.url}>
+                        <item.icon />
+                        <span>{item.name}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton className="text-sidebar-foreground/70">
+                    <Plus className="text-sidebar-foreground/70" />
+                    <span>New Project</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>          <SidebarFooter>
+            {/* User Menu */}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton
+                      size="lg"
+                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                    >
+                      <Avatar className="h-8 w-8 rounded-lg">
+                        <AvatarImage src={sidebarData.user.avatar} alt={sidebarData.user.name} />
+                        <AvatarFallback className="rounded-lg">
+                          {isSignedIn && user 
+                            ? (user.firstName?.[0] || user.fullName?.[0] || "U").toUpperCase()
+                            : "G"
+                          }
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold">{sidebarData.user.name}</span>
+                        <span className="truncate text-xs">{sidebarData.user.email}</span>
+                      </div>
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                    side={isMobile ? "bottom" : "right"}
+                    align="end"
+                    sideOffset={4}
+                  >
+                    <DropdownMenuLabel className="p-0 font-normal">
+                      <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                        <Avatar className="h-8 w-8 rounded-lg">
+                          <AvatarImage src={sidebarData.user.avatar} alt={sidebarData.user.name} />
+                          <AvatarFallback className="rounded-lg">
+                            {isSignedIn && user 
+                              ? (user.firstName?.[0] || user.fullName?.[0] || "U").toUpperCase()
+                              : "G"
+                            }
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="grid flex-1 text-left text-sm leading-tight">
+                          <span className="truncate font-semibold">{sidebarData.user.name}</span>
+                          <span className="truncate text-xs">{sidebarData.user.email}</span>
+                        </div>
+                      </div>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isSignedIn ? (
+                      <>
+                        <DropdownMenuGroup>
+                          <DropdownMenuItem>
+                            <Users />
+                            Account
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Key />
+                            API Settings
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Bell />
+                            Notifications
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <CreditCard />
+                            Billing
+                          </DropdownMenuItem>
+                        </DropdownMenuGroup>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem>
+                          <LogOut />
+                          Log out
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem>
+                          <Users />
+                          Sign In
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Sparkles />
+                          Sign Up
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+          <SidebarRail />
+        </Sidebar>        {/* Main Content */}
+        <SidebarInset>
+          <TooltipProvider>
+            <div className="min-h-screen bg-background">
+              <div className="hidden min-h-screen flex-col md:flex">
+                {/* Navbar with matching card styling */}
+                <PlaygroundNavbar presets={presets} />
+
+                {/* Main content with card-based layout matching navbar style */}
+                <div className="flex-1 px-4 sm:px-6 lg:px-8 pb-6">
+                  <div className="w-full space-y-6">
+
+                    {/* Hero Section
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -298,869 +657,1082 @@ export default function MCPServerGeneratorPage() {
               </div>
             </motion.div> */}
 
-              {/* Main Generator Section */}
-              <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+                    {/* Main Generator Section */}
+                    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
 
-                {/* Left Column - Generator */}
-                <div className="space-y-6">
+                      {/* Left Column - Generator */}
+                      <div className="space-y-6">
 
-                  {/* Prompt Input Card */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.6 }}
-                  >
-                    <Card className="border rounded-2xl shadow-sm">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                            <Sparkles className="w-4 h-4 text-primary" />
-                          </div>
-                          <CardTitle className="text-lg">Create Your MCP Server</CardTitle>
-                        </div>                        <CardDescription>
-                          Describe what your MCP server should do, and we&apos;ll generate it for you.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-6">                      <div className="space-y-2">
-                        <Label htmlFor="prompt" className="text-sm font-medium">
-                          Server Description
-                        </Label>
-                        <div className="relative">
-                          <Textarea
-                            id="prompt"
-                            value={promptText}
-                            onChange={handleTextareaChange}
-                            onKeyDown={(e) => {
-                              if (showAutocomplete && (e.key === 'Escape')) {
-                                setShowAutocomplete(false)
-                                e.preventDefault()
-                              }
-                            }}
-                            placeholder="e.g., Create an MCP server that can fetch weather data from OpenWeatherMap API and provide current conditions and forecasts for any city... (Type @ to tag tools)"
-                            className="min-h-[120px] resize-none text-base pr-2"
-                            spellCheck={true}
-                          />                          {/* Autocomplete dropdown */}
-                          {showAutocomplete && (
-                            <motion.div
-                              ref={autocompleteRef}
-                              initial={{ opacity: 0, y: -10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -10 }}
-                              className="fixed bg-card border rounded-2xl shadow-lg p-3 z-50 min-w-[220px]"
-                              style={{
-                                top: autocompletePosition.top,
-                                left: autocompletePosition.left
-                              }}
-                            >
-                              <div className="text-xs text-muted-foreground mb-3 px-1 font-medium">Select a tool:</div>
-                              <div className="space-y-1">
-                                {availableTools.map((tool) => {
-                                  const Icon = tool.icon
-                                  return (
-                                    <div
-                                      key={tool.name}
-                                      className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors group"
-                                      onClick={() => insertToolTag(tool.name)}
-                                    >
-                                      <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                        <Icon className="w-4 h-4 text-primary" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <div className="text-sm font-medium text-foreground">{tool.name}</div>
-                                        <div className="text-xs text-muted-foreground">{tool.description}</div>
-                                      </div>
-                                    </div>
-                                  )
-                                })}
-                              </div>
-                            </motion.div>
-                          )}{/* Show badges for existing tags */}
-                          {promptText.match(/@(\w+)/g) && (
-                            <div className="mt-2 flex flex-wrap gap-1">
-                              <span className="text-xs text-muted-foreground mr-2">Tagged tools:</span>
-                              {promptText.match(/@(\w+)/g)?.map((match, index) => {
-                                const toolName = match.replace(/@(\w+)/, '$1')
-                                const tool = availableTools.find(t => t.name === toolName)
-                                const Icon = tool?.icon || Code
-                                return (
-                                  <motion.div
-                                    key={`${toolName}-${index}`}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                  >
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Badge
-                                          variant="secondary"
-                                          className="text-xs bg-primary/10 text-primary border-primary/20 flex items-center gap-1 cursor-pointer hover:bg-primary/20 transition-colors group"
-                                          onClick={() => handleRemoveTag(toolName)}
-                                        >
-                                          <Icon className="w-3 h-3" />
-                                          {toolName}
-                                          <X className="w-2.5 h-2.5 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        </Badge>
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="max-w-xs">
-                                        <div className="space-y-1">
-                                          <div className="font-medium flex items-center gap-1">
-                                            <Icon className="w-3 h-3" />
-                                            {toolName}
-                                          </div>
-                                          <div className="text-xs text-muted-foreground">
-                                            {tool?.description || 'Custom tool'}
-                                          </div>
-                                          <div className="text-xs text-muted-foreground border-t pt-1">
-                                            Click to remove from prompt
-                                          </div>
-                                        </div>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </motion.div>
-                                )
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                        {/* Website URLs Section */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-sm font-medium flex items-center space-x-2">
-                              <Globe className="w-4 h-4" />
-                              <span>Website Sources (Optional)</span>
-                            </Label>
-                            <Button variant="outline" size="sm" className="h-8 px-3" onClick={addUrl}>
-                              <Plus className="w-3 h-3 mr-1" />
-                              Add URL
-                            </Button>
-                          </div>
-
-                          {/* URL Inputs */}
-                          <div className="space-y-3">
-                            <AnimatePresence>
-                              {urls.map((url, index) => (
-                                <motion.div
-                                  key={index}
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: "auto" }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="flex items-center space-x-2 group"
-                                >
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                    <Link className="w-3 h-3 text-muted-foreground" />
-                                  </div>
-                                  <Input
-                                    placeholder={index === 0 ? "https://api.example.com/docs" : "https://example.com/integration-guide"}
-                                    className="flex-1"
-                                    value={url}
-                                    onChange={(e) => updateUrl(index, e.target.value)}
-                                  />
-                                  {urls.length > 1 && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                      onClick={() => removeUrl(index)}
-                                    >
-                                      <X className="w-3 h-3" />
-                                    </Button>
-                                  )}
-                                </motion.div>
-                              ))}
-                            </AnimatePresence>
-                          </div>
-
-                          <p className="text-xs text-muted-foreground">
-                            Add documentation URLs or API references to enhance your MCP server generation.
-                          </p>
-                        </div>                      {/* Generation Options */}
-                        <div className="space-y-4">
-                          <Label className="text-sm font-medium">Generation Options</Label>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                              <div className="space-y-0.5">
-                                <Label className="text-sm font-medium">Include Tests</Label>
-                                <p className="text-xs text-muted-foreground">Generate unit tests</p>
-                              </div>
-                              <Switch
-                                checked={includeTests}
-                                onCheckedChange={setIncludeTests}
-                                leftIcon={<X className="w-3 h-3" />}
-                                rightIcon={<Code className="w-3 h-3" />}
-                              />
-                            </div>
-                            <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                              <div className="space-y-0.5">
-                                <Label className="text-sm font-medium">Error Handling</Label>
-                                <p className="text-xs text-muted-foreground">Robust error management</p>
-                              </div>
-                              <Switch
-                                checked={errorHandling}
-                                onCheckedChange={setErrorHandling}
-                                leftIcon={<X className="w-3 h-3" />}
-                                rightIcon={<Zap className="w-3 h-3" />}
-                              />
-                            </div>
-                          </div>
-                        </div>                      {/* Action Buttons Row */}
-                        <div className="flex gap-3">
-                          <div className="flex-1">
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                              <Button
-                                size="lg"
-                                className="w-full"
-                                onClick={handleGenerate}
-                                disabled={isGenerating}
-                              >
-                                {isGenerating ? (
-                                  <>
-                                    <motion.div
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                      className="w-4 h-4 mr-2"
-                                    >
-                                      <Clock className="w-4 h-4" />
-                                    </motion.div>
-                                    Generating...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Rocket className="w-4 h-4 mr-2" />
-                                    Generate
-                                  </>
-                                )}
-                              </Button>
-                            </motion.div>
-                          </div>
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button variant="outline" size="lg" className="px-4">
-                              <Code className="w-4 h-4 mr-2" />
-                              Preview
-                            </Button>
-                          </motion.div>
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button variant="outline" size="lg" className="px-4">
-                              <Download className="w-4 h-4 mr-2" />
-                              Save
-                            </Button>
-                          </motion.div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-
-                  {/* Generated Code Preview */}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <Card className="border rounded-2xl shadow-sm">
-                      <CardHeader className="pb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                              <Code className="w-4 h-4 text-primary" />
-                            </div>
-                            <CardTitle className="text-lg">Generated Server</CardTitle>
-                          </div>
-                          <AnimatePresence>
-                            {!isGenerating && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                exit={{ opacity: 0, scale: 0 }}
-                              >
-                                <Badge variant="secondary" className="text-xs">
-                                  Ready to Deploy
-                                </Badge>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </CardHeader>                    <CardContent>
-                        <div className="rounded-lg border bg-muted/30 p-4 min-h-[200px]">
-                          <AnimatePresence mode="wait">
-                            {isGenerating ? (
-                              <motion.div
-                                key="generating"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="text-center space-y-2"
-                              >
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                >
-                                  <Server className="w-8 h-8 text-primary mx-auto" />
-                                </motion.div>
-                                <p className="text-sm text-muted-foreground">
-                                  Generating your MCP server...
-                                </p>
-                              </motion.div>) : isGenerated ? (
-                                <motion.div
-                                  key="generated"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  exit={{ opacity: 0 }}
-                                  className="space-y-4"
-                                >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-2">
-                                      <CheckCircle className="w-4 h-4 text-green-500" />
-                                      <h4 className="text-sm font-medium text-foreground">Generated Tools</h4>
-                                    </div>
-                                    <Badge variant="secondary" className="text-xs">3 tools</Badge>
-                                  </div>
-
-                                  {/* Tool Cards */}
-                                  <div className="space-y-3">                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                                          <Globe className="w-4 h-4 text-blue-500" />
-                                        </div>
-                                        <div>
-                                          <h5 className="text-sm font-medium">get_weather</h5>
-                                          <p className="text-xs text-muted-foreground">Get current weather conditions</p>
-                                        </div>
-                                      </div>
-                                      <div className="flex items-center space-x-2">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-7 px-2"
-                                          onClick={() => handleToolTag('get_weather')}
-                                        >
-                                          <Edit className="w-3 h-3" />
-                                        </Button>
-                                        <Badge variant="outline" className="text-xs">Tool</Badge>
-                                      </div>
-                                    </div>
-                                    <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                      <span>• city: string</span>
-                                      <span>• Returns: object</span>
-                                    </div>
-                                  </motion.div>                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.2 }}
-                                    className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                  >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-3">
-                                          <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                                            <Zap className="w-4 h-4 text-green-500" />
-                                          </div>
-                                          <div>
-                                            <h5 className="text-sm font-medium">get_forecast</h5>
-                                            <p className="text-xs text-muted-foreground">Get 5-day weather forecast</p>
-                                          </div>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-7 px-2"
-                                            onClick={() => handleToolTag('get_forecast')}
-                                          >
-                                            <Edit className="w-3 h-3" />
-                                          </Button>
-                                          <Badge variant="outline" className="text-xs">Tool</Badge>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                        <span>• city: string</span>
-                                        <span>• days: number</span>
-                                      </div>
-                                    </motion.div>                                <motion.div
-                                      initial={{ opacity: 0, y: 10 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ delay: 0.3 }}
-                                      className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                    >
-                                      <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-3">
-                                          <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                                            <Server className="w-4 h-4 text-purple-500" />
-                                          </div>
-                                          <div>
-                                            <h5 className="text-sm font-medium">list_locations</h5>
-                                            <p className="text-xs text-muted-foreground">Search for weather locations</p>
-                                          </div>
-                                        </div>
-                                        <div className="flex items-center space-x-2">
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-7 px-2"
-                                            onClick={() => handleToolTag('list_locations')}
-                                          >
-                                            <Edit className="w-3 h-3" />
-                                          </Button>
-                                          <Badge variant="outline" className="text-xs">Tool</Badge>
-                                        </div>
-                                      </div>
-                                      <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                        <span>• query: string</span>
-                                        <span>• Returns: array</span>
-                                      </div>
-                                    </motion.div>
-                                  </div>
-
-                                  {includeTests && (
-                                    <motion.div
-                                      initial={{ opacity: 0, y: 10 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ delay: 0.4 }}
-                                      className="pt-3 border-t"
-                                    >
-                                      <div className="flex items-center space-x-2 mb-2">
-                                        <Code className="w-3 h-3 text-muted-foreground" />
-                                        <h5 className="text-xs font-medium text-muted-foreground">Test Coverage</h5>
-                                      </div>
-                                      <div className="grid grid-cols-3 gap-2 text-xs">
-                                        <div className="text-center p-2 bg-green-500/10 rounded">
-                                          <div className="font-medium text-green-600">95%</div>
-                                          <div className="text-muted-foreground">Coverage</div>
-                                        </div>
-                                        <div className="text-center p-2 bg-blue-500/10 rounded">
-                                          <div className="font-medium text-blue-600">12</div>
-                                          <div className="text-muted-foreground">Tests</div>
-                                        </div>
-                                        <div className="text-center p-2 bg-purple-500/10 rounded">
-                                          <div className="font-medium text-purple-600">0</div>
-                                          <div className="text-muted-foreground">Failures</div>
-                                        </div>
-                                      </div>
-                                    </motion.div>
-                                  )}
-
-                                  <div className="pt-2">
-                                    <p className="text-xs text-muted-foreground text-center">
-                                      Use the <Code className="w-3 h-3 inline mx-1" /> Code Viewer in the navbar to see the implementation
-                                    </p>
-                                  </div>
-                                </motion.div>
-                              ) : (
-                              <motion.div
-                                key="empty"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="flex items-center justify-center h-full"
-                              >
-                                <div className="text-center space-y-2">
-                                  <Server className="w-8 h-8 text-muted-foreground mx-auto" />
-                                  <p className="text-sm text-muted-foreground">
-                                    Your generated MCP server code will appear here
-                                  </p>
+                        {/* Prompt Input Card */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.6 }}
+                        >
+                          <Card className="border rounded-2xl shadow-sm">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
+                                  <Sparkles className="w-4 h-4 text-primary" />
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                </div>
-
-                {/* Right Column - Actions & Info */}
-                <div className="space-y-6">
-
-                  {/* Quick Actions */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.7 }}
-                  >
-                    <Card className="border rounded-2xl shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">Quick Actions</CardTitle>
-                        <CardDescription>
-                          Deploy, install, or share your MCP server
-                        </CardDescription>
-                      </CardHeader>                      <CardContent>
-                        <div className="grid grid-cols-2 gap-2">
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <Button
-                              variant="outline"
-                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                              onClick={() => {/* Install locally functionality */ }}
-                            >
-                              <Download className="w-4 h-4" />
-                              <span className="text-xs">Install</span>
-                            </Button>
-                          </motion.div>
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <Button
-                              variant="outline"
-                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                              onClick={() => {/* Deploy to cloud functionality */ }}                            >
-                              <Globe className="w-4 h-4" />
-                              <span className="text-xs">Deploy</span>
-                            </Button>
-                          </motion.div>                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <Popover open={showApiKeyPopover} onOpenChange={setShowApiKeyPopover}>
-                              <PopoverTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                                >
-                                  <Key className="w-4 h-4" />
-                                  <span className="text-xs">API Key</span>
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent className="w-80 p-4" align="center">
-                                <div className="space-y-4">
-                                  <div className="space-y-2">
-                                    <h4 className="font-medium leading-none flex items-center gap-2">
-                                      <Key className="w-4 h-4" />
-                                      API Key Management
-                                    </h4>
-                                    <p className="text-sm text-muted-foreground">
-                                      Create and manage your API keys
-                                    </p>
-                                  </div>
-
-                                  {/* Create New Key */}
-                                  <div className="space-y-3 border-t pt-3">
-                                    <div className="space-y-2">
-                                      <Label htmlFor="new-api-key-name" className="text-sm">Key Name</Label>
-                                      <Input
-                                        id="new-api-key-name"
-                                        placeholder="Enter key name"
-                                        value={newApiKeyName}
-                                        onChange={(e) => setNewApiKeyName(e.target.value)}
-                                        className="h-8"
-                                      />
+                                <CardTitle className="text-lg">Create Your MCP Server</CardTitle>
+                              </div>                        <CardDescription>
+                                Describe what your MCP server should do, and we&apos;ll generate it for you.
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-6">                      <div className="space-y-2">
+                              <Label htmlFor="prompt" className="text-sm font-medium">
+                                Server Description
+                              </Label>
+                              <div className="relative">
+                                <Textarea
+                                  id="prompt"
+                                  value={promptText}
+                                  onChange={handleTextareaChange}
+                                  onKeyDown={(e) => {
+                                    if (showAutocomplete && (e.key === 'Escape')) {
+                                      setShowAutocomplete(false)
+                                      e.preventDefault()
+                                    }
+                                  }}
+                                  placeholder="e.g., Create an MCP server that can fetch weather data from OpenWeatherMap API and provide current conditions and forecasts for any city... (Type @ to tag tools)"
+                                  className="min-h-[120px] resize-none text-base pr-2"
+                                  spellCheck={true}
+                                />                          {/* Autocomplete dropdown */}
+                                {showAutocomplete && (
+                                  <motion.div
+                                    ref={autocompleteRef}
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    className="fixed bg-card border rounded-2xl shadow-lg p-3 z-50 min-w-[220px]"
+                                    style={{
+                                      top: autocompletePosition.top,
+                                      left: autocompletePosition.left
+                                    }}
+                                  >
+                                    <div className="text-xs text-muted-foreground mb-3 px-1 font-medium">Select a tool:</div>
+                                    <div className="space-y-1">
+                                      {availableTools.map((tool) => {
+                                        const Icon = tool.icon
+                                        return (
+                                          <div
+                                            key={tool.name}
+                                            className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors group"
+                                            onClick={() => insertToolTag(tool.name)}
+                                          >
+                                            <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                              <Icon className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div className="flex-1">
+                                              <div className="text-sm font-medium text-foreground">{tool.name}</div>
+                                              <div className="text-xs text-muted-foreground">{tool.description}</div>
+                                            </div>
+                                          </div>
+                                        )
+                                      })}
                                     </div>
-                                    <Button onClick={generateApiKey} className="w-full h-8">
-                                      <Plus className="w-3 h-3 mr-2" />
-                                      Generate Key
-                                    </Button>
-                                  </div>
-
-                                  {/* API Keys List */}
-                                  {apiKeys.length > 0 && (
-                                    <div className="space-y-3 border-t pt-3">
-                                      <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium">API Keys ({apiKeys.length})</span>
-                                      </div>
-                                      <div className="space-y-2 max-h-60 overflow-y-auto">
-                                        <AnimatePresence mode="popLayout">
-                                          {apiKeys.map((key) => (
-                                            <motion.div
-                                              key={key.id}
-                                              initial={{ opacity: 0, y: 10 }}
-                                              animate={{ opacity: 1, y: 0 }}
-                                              exit={{ opacity: 0, y: -10 }}
-                                              transition={{ duration: 0.2 }}
-                                              className="border rounded-lg p-3 space-y-2 bg-muted/30"
-                                            >
-                                              <div className="flex items-center justify-between">
-                                                <span className="text-sm font-medium">{key.name}</span>
-                                                <div className="flex gap-1">
-                                                  <motion.div
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                  >
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() => toggleKeyVisibility(key.id)}
-                                                      className="h-6 w-6 p-0"
-                                                    >
-                                                      {visibleKeys.has(key.id) ? (
-                                                        <EyeOff className="w-3 h-3" />
-                                                      ) : (
-                                                        <Eye className="w-3 h-3" />
-                                                      )}
-                                                    </Button>
-                                                  </motion.div>
-                                                  <motion.div
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                  >
-                                                    <CopyButton
-                                                      content={key.key}
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="h-6 w-6 p-0"
-                                                    />
-                                                  </motion.div>
-                                                  <motion.div
-                                                    whileHover={{ scale: 1.1 }}
-                                                    whileTap={{ scale: 0.9 }}
-                                                  >
-                                                    <Button
-                                                      size="sm"
-                                                      variant="outline"
-                                                      onClick={() => deleteApiKey(key.id)}
-                                                      className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                                    >
-                                                      <Trash2 className="w-3 h-3" />
-                                                    </Button>
-                                                  </motion.div>
+                                  </motion.div>
+                                )}{/* Show badges for existing tags */}
+                                {promptText.match(/@(\w+)/g) && (
+                                  <div className="mt-2 flex flex-wrap gap-1">
+                                    <span className="text-xs text-muted-foreground mr-2">Tagged tools:</span>
+                                    {promptText.match(/@(\w+)/g)?.map((match, index) => {
+                                      const toolName = match.replace(/@(\w+)/, '$1')
+                                      const tool = availableTools.find(t => t.name === toolName)
+                                      const Icon = tool?.icon || Code
+                                      return (
+                                        <motion.div
+                                          key={`${toolName}-${index}`}
+                                          initial={{ opacity: 0, scale: 0.8 }}
+                                          animate={{ opacity: 1, scale: 1 }}
+                                          exit={{ opacity: 0, scale: 0.8 }}
+                                        >
+                                          <Tooltip>
+                                            <TooltipTrigger asChild>
+                                              <Badge
+                                                variant="secondary"
+                                                className="text-xs bg-primary/10 text-primary border-primary/20 flex items-center gap-1 cursor-pointer hover:bg-primary/20 transition-colors group"
+                                                onClick={() => handleRemoveTag(toolName)}
+                                              >
+                                                <Icon className="w-3 h-3" />
+                                                {toolName}
+                                                <X className="w-2.5 h-2.5 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                              </Badge>
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" className="max-w-xs">
+                                              <div className="space-y-1">
+                                                <div className="font-medium flex items-center gap-1">
+                                                  <Icon className="w-3 h-3" />
+                                                  {toolName}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                  {tool?.description || 'Custom tool'}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground border-t pt-1">
+                                                  Click to remove from prompt
                                                 </div>
                                               </div>
-                                              <div className="text-xs text-muted-foreground">
-                                                Created {key.createdAt.toLocaleDateString()}
-                                              </div>                                              <div className="font-mono text-xs bg-background rounded p-2 break-all border">
-                                                <AnimatePresence mode="wait">
-                                                  {visibleKeys.has(key.id) ? (
-                                                    <motion.span
-                                                      key="visible"
-                                                      initial={{ opacity: 0, scale: 0.9 }}
-                                                      animate={{ opacity: 1, scale: 1 }}
-                                                      exit={{ opacity: 0, scale: 0.9 }}
-                                                      transition={{ duration: 0.2 }}
-                                                    >
-                                                      {key.key}
-                                                    </motion.span>
-                                                  ) : (
-                                                    <motion.span
-                                                      key="hidden"
-                                                      initial={{ opacity: 0, scale: 0.9 }}
-                                                      animate={{ opacity: 1, scale: 1 }}
-                                                      exit={{ opacity: 0, scale: 0.9 }}
-                                                      transition={{ duration: 0.2 }}
-                                                    >
-                                                      {'•'.repeat(key.key.length)}
-                                                    </motion.span>
-                                                  )}
-                                                </AnimatePresence>
-                                              </div>
-                                            </motion.div>
-                                          ))}
-                                        </AnimatePresence>
-                                      </div>
-                                    </div>
-                                  )}
+                                            </TooltipContent>
+                                          </Tooltip>
+                                        </motion.div>
+                                      )
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
 
-                                  {apiKeys.length === 0 && (
-                                    <div className="text-center py-4 text-muted-foreground border-t">
-                                      <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                      <p className="text-sm">No API keys yet</p>
-                                      <p className="text-xs">Create your first key above</p>
-                                    </div>
-                                  )}
+                              {/* Website URLs Section */}
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                  <Label className="text-sm font-medium flex items-center space-x-2">
+                                    <Globe className="w-4 h-4" />
+                                    <span>Website Sources (Optional)</span>
+                                  </Label>
+                                  <Button variant="outline" size="sm" className="h-8 px-3" onClick={addUrl}>
+                                    <Plus className="w-3 h-3 mr-1" />
+                                    Add URL
+                                  </Button>
                                 </div>
-                              </PopoverContent>
-                            </Popover>
-                          </motion.div>
-                          <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <Button
-                              variant="outline"
-                              className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                              onClick={() => {/* Share with community functionality */ }}
-                            >
-                              <Share2 className="w-4 h-4" />
-                              <span className="text-xs">Share</span>
-                            </Button>
-                          </motion.div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
 
-                  {/* Server Info */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.9 }}
-                  >
-                    <Card className="border rounded-2xl shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-lg">Server Details</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Status</span>
-                            <Badge variant={isGenerating ? "default" : "outline"} className="text-xs">
-                              {isGenerating ? "Generating" : "Not Generated"}
-                            </Badge>
-                          </div>
-                          <Separator />
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Runtime</span>
-                            <span>Node.js</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Protocol</span>
-                            <span>HTTP</span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Version</span>
-                            <span>1.0.0</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>                {/* Local Testing Environment */}
-                  <motion.div
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 1.1 }}
-                  >
-                    <Card className="border rounded-2xl shadow-sm">                    <CardHeader className="pb-4">
-                      <div>
-                        <CardTitle className="text-lg">Local Testing</CardTitle>
-                        <CardDescription>
-                          Test and modify your MCP server live
-                        </CardDescription>
-                      </div>                      {/* Start/Stop Server Button directly under header */}
-                      <div className="mt-4">
-                        {serverStarted ? (
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              variant="outline"
-                              onClick={handleTestServer}
-                              className="w-full justify-start"
-                            >
-                              <X className="w-4 h-4 mr-2" />
-                              Stop Server
-                            </Button>
-                          </motion.div>
-                        ) : (
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button
-                              variant="outline"
-                              onClick={handleTestServer}
-                              disabled={isTestingServer}
-                              className="w-full justify-start"
-                            >
-                              <Rocket className="w-4 h-4 mr-2" />
-                              {isTestingServer ? "Starting..." : "Start Server"}
-                            </Button>
-                          </motion.div>
-                        )}
+                                {/* URL Inputs */}
+                                <div className="space-y-3">
+                                  <AnimatePresence>
+                                    {urls.map((url, index) => (
+                                      <motion.div
+                                        key={index}
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        className="flex items-center space-x-2 group"
+                                      >
+                                        <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
+                                          <Link className="w-3 h-3 text-muted-foreground" />
+                                        </div>
+                                        <Input
+                                          placeholder={index === 0 ? "https://api.example.com/docs" : "https://example.com/integration-guide"}
+                                          className="flex-1"
+                                          value={url}
+                                          onChange={(e) => updateUrl(index, e.target.value)}
+                                        />
+                                        {urls.length > 1 && (
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => removeUrl(index)}
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </Button>
+                                        )}
+                                      </motion.div>
+                                    ))}
+                                  </AnimatePresence>
+                                </div>
+
+                                <p className="text-xs text-muted-foreground">
+                                  Add documentation URLs or API references to enhance your MCP server generation.
+                                </p>
+                              </div>                      {/* Generation Options */}
+                              <div className="space-y-4">
+                                <Label className="text-sm font-medium">Generation Options</Label>
+                                <div className="grid gap-4 sm:grid-cols-2">
+                                  <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
+                                    <div className="space-y-0.5">
+                                      <Label className="text-sm font-medium">Include Tests</Label>
+                                      <p className="text-xs text-muted-foreground">Generate unit tests</p>
+                                    </div>
+                                    <Switch
+                                      checked={includeTests}
+                                      onCheckedChange={setIncludeTests}
+                                      leftIcon={<X className="w-3 h-3" />}
+                                      rightIcon={<Code className="w-3 h-3" />}
+                                    />
+                                  </div>
+                                  <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
+                                    <div className="space-y-0.5">
+                                      <Label className="text-sm font-medium">Error Handling</Label>
+                                      <p className="text-xs text-muted-foreground">Robust error management</p>
+                                    </div>
+                                    <Switch
+                                      checked={errorHandling}
+                                      onCheckedChange={setErrorHandling}
+                                      leftIcon={<X className="w-3 h-3" />}
+                                      rightIcon={<Zap className="w-3 h-3" />}
+                                    />
+                                  </div>
+                                </div>
+                              </div>                      {/* Action Buttons Row */}
+                              <div className="flex gap-3">
+                                <div className="flex-1">
+                                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                    <Button
+                                      size="lg"
+                                      className="w-full"
+                                      onClick={handleGenerate}
+                                      disabled={isGenerating}
+                                    >
+                                      {isGenerating ? (
+                                        <>
+                                          <motion.div
+                                            animate={{ rotate: 360 }}
+                                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                            className="w-4 h-4 mr-2"
+                                          >
+                                            <Clock className="w-4 h-4" />
+                                          </motion.div>
+                                          Generating...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Rocket className="w-4 h-4 mr-2" />
+                                          Generate
+                                        </>
+                                      )}
+                                    </Button>
+                                  </motion.div>
+                                </div>
+                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                  <Button variant="outline" size="lg" className="px-4">
+                                    <Code className="w-4 h-4 mr-2" />
+                                    Preview
+                                  </Button>
+                                </motion.div>
+                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                                  <Button variant="outline" size="lg" className="px-4">
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Save
+                                  </Button>
+                                </motion.div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+
+                        {/* Generated Code Preview */}
+                        <motion.div
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.8 }}
+                        >
+                          <Card className="border rounded-2xl shadow-sm">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
+                                    <Code className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <CardTitle className="text-lg">Generated Server</CardTitle>
+                                </div>
+                                <AnimatePresence>
+                                  {!isGenerating && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0 }}
+                                    >
+                                      <Badge variant="secondary" className="text-xs">
+                                        Ready to Deploy
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </CardHeader>                    <CardContent>
+                              <div className="rounded-lg border bg-muted/30 p-4 min-h-[200px]">
+                                <AnimatePresence mode="wait">
+                                  {isGenerating ? (
+                                    <motion.div
+                                      key="generating"
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      className="text-center space-y-2"
+                                    >
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                                      >
+                                        <Server className="w-8 h-8 text-primary mx-auto" />
+                                      </motion.div>
+                                      <p className="text-sm text-muted-foreground">
+                                        Generating your MCP server...
+                                      </p>
+                                    </motion.div>) : isGenerated ? (
+                                      <motion.div
+                                        key="generated"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="space-y-4"
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center space-x-2">
+                                            <CheckCircle className="w-4 h-4 text-green-500" />
+                                            <h4 className="text-sm font-medium text-foreground">Generated Tools</h4>
+                                          </div>
+                                          <Badge variant="secondary" className="text-xs">3 tools</Badge>
+                                        </div>
+
+                                        {/* Tool Cards */}
+                                        <div className="space-y-3">                                <motion.div
+                                          initial={{ opacity: 0, y: 10 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ delay: 0.1 }}
+                                          className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
+                                        >
+                                          <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-3">
+                                              <div className="w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                                                <Globe className="w-4 h-4 text-blue-500" />
+                                              </div>
+                                              <div>
+                                                <h5 className="text-sm font-medium">get_weather</h5>
+                                                <p className="text-xs text-muted-foreground">Get current weather conditions</p>
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                              <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-7 px-2"
+                                                onClick={() => handleToolTag('get_weather')}
+                                              >
+                                                <Edit className="w-3 h-3" />
+                                              </Button>
+                                              <Badge variant="outline" className="text-xs">Tool</Badge>
+                                            </div>
+                                          </div>
+                                          <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
+                                            <span>• city: string</span>
+                                            <span>• Returns: object</span>
+                                          </div>
+                                        </motion.div>                                <motion.div
+                                          initial={{ opacity: 0, y: 10 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ delay: 0.2 }}
+                                          className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
+                                                  <Zap className="w-4 h-4 text-green-500" />
+                                                </div>
+                                                <div>
+                                                  <h5 className="text-sm font-medium">get_forecast</h5>
+                                                  <p className="text-xs text-muted-foreground">Get 5-day weather forecast</p>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center space-x-2">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 px-2"
+                                                  onClick={() => handleToolTag('get_forecast')}
+                                                >
+                                                  <Edit className="w-3 h-3" />
+                                                </Button>
+                                                <Badge variant="outline" className="text-xs">Tool</Badge>
+                                              </div>
+                                            </div>
+                                            <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
+                                              <span>• city: string</span>
+                                              <span>• days: number</span>
+                                            </div>
+                                          </motion.div>                                <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.3 }}
+                                            className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
+                                          >
+                                            <div className="flex items-center justify-between">
+                                              <div className="flex items-center space-x-3">
+                                                <div className="w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
+                                                  <Server className="w-4 h-4 text-purple-500" />
+                                                </div>
+                                                <div>
+                                                  <h5 className="text-sm font-medium">list_locations</h5>
+                                                  <p className="text-xs text-muted-foreground">Search for weather locations</p>
+                                                </div>
+                                              </div>
+                                              <div className="flex items-center space-x-2">
+                                                <Button
+                                                  variant="ghost"
+                                                  size="sm"
+                                                  className="h-7 px-2"
+                                                  onClick={() => handleToolTag('list_locations')}
+                                                >
+                                                  <Edit className="w-3 h-3" />
+                                                </Button>
+                                                <Badge variant="outline" className="text-xs">Tool</Badge>
+                                              </div>
+                                            </div>
+                                            <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
+                                              <span>• query: string</span>
+                                              <span>• Returns: array</span>
+                                            </div>
+                                          </motion.div>
+                                        </div>
+
+                                        {includeTests && (
+                                          <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: 0.4 }}
+                                            className="pt-3 border-t"
+                                          >
+                                            <div className="flex items-center space-x-2 mb-2">
+                                              <Code className="w-3 h-3 text-muted-foreground" />
+                                              <h5 className="text-xs font-medium text-muted-foreground">Test Coverage</h5>
+                                            </div>
+                                            <div className="grid grid-cols-3 gap-2 text-xs">
+                                              <div className="text-center p-2 bg-green-500/10 rounded">
+                                                <div className="font-medium text-green-600">95%</div>
+                                                <div className="text-muted-foreground">Coverage</div>
+                                              </div>
+                                              <div className="text-center p-2 bg-blue-500/10 rounded">
+                                                <div className="font-medium text-blue-600">12</div>
+                                                <div className="text-muted-foreground">Tests</div>
+                                              </div>
+                                              <div className="text-center p-2 bg-purple-500/10 rounded">
+                                                <div className="font-medium text-purple-600">0</div>
+                                                <div className="text-muted-foreground">Failures</div>
+                                              </div>
+                                            </div>
+                                          </motion.div>
+                                        )}
+
+                                        <div className="pt-2">
+                                          <p className="text-xs text-muted-foreground text-center">
+                                            Use the <Code className="w-3 h-3 inline mx-1" /> Code Viewer in the navbar to see the implementation
+                                          </p>
+                                        </div>
+                                      </motion.div>
+                                    ) : (
+                                    <motion.div
+                                      key="empty"
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      exit={{ opacity: 0 }}
+                                      className="flex items-center justify-center h-full"
+                                    >
+                                      <div className="text-center space-y-2">
+                                        <Server className="w-8 h-8 text-muted-foreground mx-auto" />
+                                        <p className="text-sm text-muted-foreground">
+                                          Your generated MCP server code will appear here
+                                        </p>
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
                       </div>
-                    </CardHeader><CardContent className="space-y-4">
-                        {/* IDE Configuration */}
-                        {showIdeConfig && serverStarted && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
 
-                          >
-                            <CodeTabs
-                              codes={getIdeConfig()}
-                              lang="json"
-                              copyButton={true}
-                              defaultValue="VS Code"
-                            />
-                          </motion.div>
-                        )}
+                      {/* Right Column - Actions & Info */}
+                      <div className="space-y-6">                  {/* Quick Actions */}
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.7 }}
+                        >
+                          <Card className="border rounded-2xl shadow-sm">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
+                                  <Zap className="w-4 h-4 text-primary" />
+                                </div>
+                                <div>
+                                  <CardTitle className="text-lg">Quick Actions</CardTitle>
+                                  <CardDescription className="text-sm">
+                                    Deploy, install, or share your MCP server
+                                  </CardDescription>
+                                </div>
+                              </div>
+                            </CardHeader>                      <CardContent>
+                              <div className="grid grid-cols-2 gap-3">
+                                <motion.div
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className="group"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
+                                    onClick={() => {/* Install locally functionality */ }}
+                                  >
+                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                                      <Download className="w-4 h-4 text-blue-600" />
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-sm font-medium">Install</div>
+                                      <div className="text-xs text-muted-foreground">Local setup</div>
+                                    </div>
+                                  </Button>
+                                </motion.div>
+                                <motion.div
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className="group"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-green-50 hover:border-green-200 transition-all duration-200"
+                                    onClick={() => {/* Deploy to cloud functionality */ }}
+                                  >
+                                    <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+                                      <Globe className="w-4 h-4 text-green-600" />
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-sm font-medium">Deploy</div>
+                                      <div className="text-xs text-muted-foreground">To cloud</div>
+                                    </div>
+                                  </Button>
+                                </motion.div>                          <motion.div
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className="group col-span-2"
+                                >
+                                  <Popover open={showApiKeyPopover} onOpenChange={setShowApiKeyPopover}>
+                                    <PopoverTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        className="h-20 w-full flex-col gap-2 hover:bg-purple-50 hover:border-purple-200 transition-all duration-200"
+                                      >
+                                        <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
+                                          <Key className="w-4 h-4 text-purple-600" />
+                                        </div>
+                                        <div className="text-center">
+                                          <div className="text-sm font-medium">API Key Management</div>
+                                          <div className="text-xs text-muted-foreground">Create and manage keys</div>
+                                        </div>
+                                      </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80 p-4" align="center">
+                                      <div className="space-y-4">
+                                        <div className="space-y-2">
+                                          <h4 className="font-medium leading-none flex items-center gap-2">
+                                            <Key className="w-4 h-4" />
+                                            API Key Management
+                                          </h4>
+                                          <p className="text-sm text-muted-foreground">
+                                            Create and manage your API keys
+                                          </p>
+                                        </div>
 
-                        {/* Server Output */}
-                        {(testOutput || isTestingServer) && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            className="bg-muted/50 rounded-lg p-3"
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500 animate-pulse"}`}></div>
-                              <span className="text-xs font-medium text-muted-foreground">
-                                {isTestingServer ? "Starting..." : serverStarted ? "Server Running" : "Server Output"}
-                              </span>
-                            </div>
-                            <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">
-                              {testOutput}
-                            </pre>
-                          </motion.div>
-                        )}
-                        {/* Empty state when server is not started */}
-                        {!serverStarted && !isTestingServer && !testOutput && (
-                          <div className="flex flex-col items-center justify-center py-8 text-center">
-                            <div className="w-12 h-12 bg-muted/50 rounded-lg flex items-center justify-center mb-3">
-                              <Rocket className="w-6 h-6 text-muted-foreground" />
-                            </div>
-                            <h3 className="text-sm font-medium text-foreground mb-1">Ready to Test</h3>
-                            <p className="text-xs text-muted-foreground max-w-xs">
-                              Click &quot;Start Server&quot; above to generate IDE configuration and begin testing your tools locally.
-                            </p>
-                          </div>
-                        )}{/* Quick Actions */}
-                        <div className="pt-2 border-t">
-                          <div className="flex items-center gap-2 mb-3">
-                            <span className="text-xs font-medium text-muted-foreground">Quick Actions</span>
-                            <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500"}`}></div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2">
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                            >
-                              <Button
-                                variant="outline"
-                                className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                                onClick={() => {/* Download functionality */ }}
-                              >
-                                <Download className="w-4 h-4" />
-                                <span className="text-xs">Download</span>
-                              </Button>
-                            </motion.div>
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                            >
-                              <Button
-                                variant="outline"
-                                className="h-16 w-full flex-col gap-1 hover:bg-muted/50"
-                                onClick={() => {/* Share functionality */ }}
-                              >
-                                <Share2 className="w-4 h-4" />
-                                <span className="text-xs">Share</span>
-                              </Button>
-                            </motion.div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                                        {/* Create New Key */}
+                                        <div className="space-y-3 border-t pt-3">
+                                          <div className="space-y-2">
+                                            <Label htmlFor="new-api-key-name" className="text-sm">Key Name</Label>
+                                            <Input
+                                              id="new-api-key-name"
+                                              placeholder="Enter key name"
+                                              value={newApiKeyName}
+                                              onChange={(e) => setNewApiKeyName(e.target.value)}
+                                              className="h-8"
+                                            />
+                                          </div>
+                                          <Button onClick={generateApiKey} className="w-full h-8">
+                                            <Plus className="w-3 h-3 mr-2" />
+                                            Generate Key
+                                          </Button>
+                                        </div>
+
+                                        {/* API Keys List */}
+                                        {apiKeys.length > 0 && (
+                                          <div className="space-y-3 border-t pt-3">
+                                            <div className="flex items-center justify-between">
+                                              <span className="text-sm font-medium">API Keys ({apiKeys.length})</span>
+                                            </div>
+                                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                              <AnimatePresence mode="popLayout">
+                                                {apiKeys.map((key) => (
+                                                  <motion.div
+                                                    key={key.id}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0, y: -10 }}
+                                                    transition={{ duration: 0.2 }}
+                                                    className="border rounded-lg p-3 space-y-2 bg-muted/30"
+                                                  >
+                                                    <div className="flex items-center justify-between">
+                                                      <span className="text-sm font-medium">{key.name}</span>
+                                                      <div className="flex gap-1">
+                                                        <motion.div
+                                                          whileHover={{ scale: 1.1 }}
+                                                          whileTap={{ scale: 0.9 }}
+                                                        >
+                                                          <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => toggleKeyVisibility(key.id)}
+                                                            className="h-6 w-6 p-0"
+                                                          >
+                                                            {visibleKeys.has(key.id) ? (
+                                                              <EyeOff className="w-3 h-3" />
+                                                            ) : (
+                                                              <Eye className="w-3 h-3" />
+                                                            )}
+                                                          </Button>
+                                                        </motion.div>
+                                                        <motion.div
+                                                          whileHover={{ scale: 1.1 }}
+                                                          whileTap={{ scale: 0.9 }}
+                                                        >
+                                                          <CopyButton
+                                                            content={key.key}
+                                                            variant="outline"
+                                                            size="sm"
+                                                            className="h-6 w-6 p-0"
+                                                          />
+                                                        </motion.div>
+                                                        <motion.div
+                                                          whileHover={{ scale: 1.1 }}
+                                                          whileTap={{ scale: 0.9 }}
+                                                        >
+                                                          <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => deleteApiKey(key.id)}
+                                                            className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                                                          >
+                                                            <Trash2 className="w-3 h-3" />
+                                                          </Button>
+                                                        </motion.div>
+                                                      </div>
+                                                    </div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                      Created {key.createdAt.toLocaleDateString()}
+                                                    </div>                                              <div className="font-mono text-xs bg-background rounded p-2 break-all border">
+                                                      <AnimatePresence mode="wait">
+                                                        {visibleKeys.has(key.id) ? (
+                                                          <motion.span
+                                                            key="visible"
+                                                            initial={{ opacity: 0, scale: 0.9 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.9 }}
+                                                            transition={{ duration: 0.2 }}
+                                                          >
+                                                            {key.key}
+                                                          </motion.span>
+                                                        ) : (
+                                                          <motion.span
+                                                            key="hidden"
+                                                            initial={{ opacity: 0, scale: 0.9 }}
+                                                            animate={{ opacity: 1, scale: 1 }}
+                                                            exit={{ opacity: 0, scale: 0.9 }}
+                                                            transition={{ duration: 0.2 }}
+                                                          >
+                                                            {'•'.repeat(key.key.length)}
+                                                          </motion.span>
+                                                        )}
+                                                      </AnimatePresence>
+                                                    </div>
+                                                  </motion.div>
+                                                ))}
+                                              </AnimatePresence>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {apiKeys.length === 0 && (
+                                          <div className="text-center py-4 text-muted-foreground border-t">
+                                            <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">No API keys yet</p>
+                                            <p className="text-xs">Create your first key above</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                </motion.div>                          <motion.div
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className="group col-span-2"
+                                >
+                                  <Button
+                                    variant="outline"
+                                    className="h-20 w-full flex-col gap-2 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200"
+                                    onClick={() => {/* Share with community functionality */ }}
+                                  >
+                                    <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                                      <Share2 className="w-4 h-4 text-orange-600" />
+                                    </div>
+                                    <div className="text-center">
+                                      <div className="text-sm font-medium">Share with Community</div>
+                                      <div className="text-xs text-muted-foreground">Publish to marketplace</div>
+                                    </div>
+                                  </Button>
+                                </motion.div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>                  {/* Server Info */}
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.9 }}
+                        >
+                          <Card className="border rounded-2xl shadow-sm">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
+                                    <Server className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-lg">Server Details</CardTitle>
+                                    <CardDescription className="text-sm">
+                                      Configuration and runtime information
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                                <AnimatePresence>
+                                  {isGenerated && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0 }}
+                                    >
+                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                        Ready
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                              <div className="space-y-4">
+                                {/* Status Row */}
+                                <motion.div
+                                  className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
+                                  whileHover={{ scale: 1.01 }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
+                                      <Sparkles className="w-3 h-3 text-muted-foreground" />
+                                    </div>
+                                    <div>
+                                      <span className="text-sm font-medium">Status</span>
+                                      <p className="text-xs text-muted-foreground">Current generation state</p>
+                                    </div>
+                                  </div>
+                                  <Badge
+                                    variant={isGenerating ? "default" : isGenerated ? "secondary" : "outline"}
+                                    className={`text-xs ${isGenerating ? "bg-blue-100 text-blue-700 border-blue-200" :
+                                      isGenerated ? "bg-green-100 text-green-700 border-green-200" :
+                                        "bg-gray-100 text-gray-600 border-gray-200"
+                                      }`}
+                                  >
+                                    {isGenerating && (
+                                      <motion.div
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                        className="w-3 h-3 mr-1"
+                                      >
+                                        <Clock className="w-3 h-3" />
+                                      </motion.div>
+                                    )}
+                                    {isGenerated && <CheckCircle className="w-3 h-3 mr-1" />}
+                                    {isGenerating ? "Generating" : isGenerated ? "Generated" : "Not Generated"}
+                                  </Badge>
+                                </motion.div>
+
+                                <Separator />
+
+                                {/* Runtime Row */}
+                                <motion.div
+                                  className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
+                                  whileHover={{ scale: 1.01 }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded">
+                                      <Code className="w-3 h-3 text-green-600" />
+                                    </div>
+                                    <div>
+                                      <span className="text-sm font-medium">Runtime</span>
+                                      <p className="text-xs text-muted-foreground">JavaScript execution environment</p>
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs font-mono">
+                                    Node.js
+                                  </Badge>
+                                </motion.div>
+
+                                {/* Protocol Row */}
+                                <motion.div
+                                  className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
+                                  whileHover={{ scale: 1.01 }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded">
+                                      <Globe className="w-3 h-3 text-blue-600" />
+                                    </div>
+                                    <div>
+                                      <span className="text-sm font-medium">Protocol</span>
+                                      <p className="text-xs text-muted-foreground">Communication protocol</p>
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs font-mono">
+                                    HTTP
+                                  </Badge>
+                                </motion.div>
+
+                                {/* Version Row */}
+                                <motion.div
+                                  className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
+                                  whileHover={{ scale: 1.01 }}
+                                >
+                                  <div className="flex items-center space-x-3">
+                                    <div className="flex items-center justify-center w-6 h-6 bg-purple-100 rounded">
+                                      <Zap className="w-3 h-3 text-purple-600" />
+                                    </div>
+                                    <div>
+                                      <span className="text-sm font-medium">Version</span>
+                                      <p className="text-xs text-muted-foreground">MCP protocol version</p>
+                                    </div>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs font-mono">
+                                    1.0.0
+                                  </Badge>
+                                </motion.div>
+                              </div>
+
+                              {/* Additional Info Section */}
+                              {isGenerated && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  transition={{ delay: 0.2 }}
+                                  className="pt-4 border-t"
+                                >
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-xs font-medium text-muted-foreground">Performance</span>
+                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="text-center p-2 rounded-lg bg-muted/50">
+                                      <div className="text-lg font-semibold text-green-600">99.9%</div>
+                                      <div className="text-xs text-muted-foreground">Uptime</div>
+                                    </div>
+                                    <div className="text-center p-2 rounded-lg bg-muted/50">
+                                      <div className="text-lg font-semibold text-blue-600">&lt;50ms</div>
+                                      <div className="text-xs text-muted-foreground">Response</div>
+                                    </div>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        </motion.div>                {/* Local Testing Environment */}
+                        <motion.div
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 1.1 }}
+                        >
+                          <Card className="border rounded-2xl shadow-sm">
+                            <CardHeader className="pb-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
+                                    <Rocket className="w-4 h-4 text-primary" />
+                                  </div>
+                                  <div>
+                                    <CardTitle className="text-lg">Local Testing</CardTitle>
+                                    <CardDescription className="text-sm">
+                                      Test and modify your MCP server live
+                                    </CardDescription>
+                                  </div>
+                                </div>
+                                <AnimatePresence>
+                                  {serverStarted && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0 }}
+                                    >
+                                      <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
+                                        <div className="w-2 h-2 rounded-full bg-green-500 mr-1"></div>
+                                        Running
+                                      </Badge>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>                        {/* Start/Stop Server Button directly under header */}
+                              <div className="mt-4">
+                                {serverStarted ? (
+                                  <motion.div
+                                    className="p-3 rounded-lg border bg-red-50 hover:bg-red-100 transition-colors"
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      onClick={handleTestServer}
+                                      className="w-full justify-start border-red-200 text-red-700 hover:bg-red-100"
+                                    >
+                                      <div className="flex items-center justify-center w-6 h-6 bg-red-100 rounded mr-3">
+                                        <X className="w-3 h-3 text-red-600" />
+                                      </div>
+                                      <div className="text-left">
+                                        <div className="font-medium">Stop Server</div>
+                                        <div className="text-xs text-red-600">Terminate local instance</div>
+                                      </div>
+                                    </Button>
+                                  </motion.div>
+                                ) : (
+                                  <motion.div
+                                    className="p-3 rounded-lg border bg-green-50 hover:bg-green-100 transition-colors"
+                                    whileHover={{ scale: 1.01 }}
+                                    whileTap={{ scale: 0.98 }}
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      onClick={handleTestServer}
+                                      disabled={isTestingServer}
+                                      className="w-full justify-start border-green-200 text-green-700 hover:bg-green-100"
+                                    >
+                                      <div className="flex items-center justify-center w-6 h-6 bg-green-100 rounded mr-3">
+                                        <Rocket className="w-3 h-3 text-green-600" />
+                                      </div>
+                                      <div className="text-left">
+                                        <div className="font-medium">
+                                          {isTestingServer ? "Starting..." : "Start Server"}
+                                        </div>
+                                        <div className="text-xs text-green-600">
+                                          {isTestingServer ? "Initializing environment" : "Launch local development server"}
+                                        </div>
+                                      </div>
+                                    </Button>
+                                  </motion.div>
+                                )}
+                              </div>
+                            </CardHeader><CardContent className="space-y-4">
+                              {/* IDE Configuration */}
+                              {showIdeConfig && serverStarted && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+
+                                >
+                                  <CodeTabs
+                                    codes={getIdeConfig()}
+                                    lang="json"
+                                    copyButton={true}
+                                    defaultValue="VS Code"
+                                  />
+                                </motion.div>
+                              )}
+
+                              {/* Server Output */}
+                              {(testOutput || isTestingServer) && (
+                                <motion.div
+                                  initial={{ opacity: 0, height: 0 }}
+                                  animate={{ opacity: 1, height: "auto" }}
+                                  className="bg-muted/50 rounded-lg p-3"
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500 animate-pulse"}`}></div>
+                                    <span className="text-xs font-medium text-muted-foreground">
+                                      {isTestingServer ? "Starting..." : serverStarted ? "Server Running" : "Server Output"}
+                                    </span>
+                                  </div>
+                                  <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">
+                                    {testOutput}
+                                  </pre>
+                                </motion.div>
+                              )}
+                              {/* Empty state when server is not started */}
+                              {!serverStarted && !isTestingServer && !testOutput && (
+                                <div className="flex flex-col items-center justify-center py-8 text-center">
+                                  <div className="w-12 h-12 bg-muted/50 rounded-lg flex items-center justify-center mb-3">
+                                    <Rocket className="w-6 h-6 text-muted-foreground" />
+                                  </div>
+                                  <h3 className="text-sm font-medium text-foreground mb-1">Ready to Test</h3>
+                                  <p className="text-xs text-muted-foreground max-w-xs">
+                                    Click &quot;Start Server&quot; above to generate IDE configuration and begin testing your tools locally.
+                                  </p>
+                                </div>)}{/* Quick Actions */}
+                              <div className="pt-4 border-t">
+                                <div className="flex items-center gap-2 mb-4">
+                                  <div className="flex items-center justify-center w-6 h-6 bg-primary/10 rounded-md">
+                                    <Zap className="w-3 h-3 text-primary" />
+                                  </div>
+                                  <span className="text-sm font-medium">Quick Actions</span>
+                                  <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-green-500" : "bg-blue-500"}`}></div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3">
+                                  <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="group"
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      className="h-16 w-full flex-col gap-1 hover:bg-blue-50 hover:border-blue-200 transition-all duration-200"
+                                      onClick={() => {/* Download functionality */ }}
+                                    >
+                                      <div className="flex items-center justify-center w-6 h-6 bg-blue-100 rounded group-hover:bg-blue-200 transition-colors">
+                                        <Download className="w-3 h-3 text-blue-600" />
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-xs font-medium">Download</div>
+                                        <div className="text-xs text-muted-foreground">Get files</div>
+                                      </div>
+                                    </Button>
+                                  </motion.div>
+                                  <motion.div
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="group"
+                                  >
+                                    <Button
+                                      variant="outline"
+                                      className="h-16 w-full flex-col gap-1 hover:bg-orange-50 hover:border-orange-200 transition-all duration-200"
+                                      onClick={() => {/* Share functionality */ }}
+                                    >
+                                      <div className="flex items-center justify-center w-6 h-6 bg-orange-100 rounded group-hover:bg-orange-200 transition-colors">
+                                        <Share2 className="w-3 h-3 text-orange-600" />
+                                      </div>
+                                      <div className="text-center">
+                                        <div className="text-xs font-medium">Share</div>
+                                        <div className="text-xs text-muted-foreground">Export config</div>
+                                      </div>
+                                    </Button>
+                                  </motion.div>
+                                </div>                        </div>
+                            </CardContent>
+                          </Card>
+                        </motion.div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Mobile responsive message */}
-        <div className="md:hidden p-6">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border rounded-2xl shadow-sm p-8 text-center"
-          >
-            <Server className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Mobile Coming Soon</h2>
-            <p className="text-muted-foreground">
-              The MCP Server Generator is optimized for desktop. Mobile support coming soon!          </p>
-          </motion.div>
-        </div>
+              {/* Mobile responsive message */}
+              <div className="md:hidden p-6">
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-card border rounded-2xl shadow-sm p-8 text-center"
+                >
+                  <Server className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h2 className="text-xl font-semibold mb-2">Mobile Coming Soon</h2>
+                  <p className="text-muted-foreground">
+                    The MCP Server Generator is optimized for desktop. Mobile support coming soon!
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </TooltipProvider>
+        </SidebarInset>
       </div>
-    </TooltipProvider>
+    </SidebarProvider>
   )
 }
