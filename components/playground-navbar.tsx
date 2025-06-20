@@ -16,10 +16,10 @@ import { AuthPrompt } from "@/components/auth-prompt"
 import { SidebarTrigger } from "@/components/animate-ui/radix/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Preset } from "@/app/data/presets"
 
@@ -34,7 +34,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
     return (
         <TooltipProvider>
             <div className="w-full px-4 sm:px-6 lg:px-8 py-2">
-            <div className="bg-card border rounded-2xl shadow-sm">                <div className="flex items-center justify-between px-4 py-2.5">
+                <div className="bg-card border rounded-2xl shadow-sm">                <div className="flex items-center justify-between px-4 py-2.5">
                     <div className="flex items-center space-x-2">
                         <SidebarTrigger className="h-7 w-7" />
                         <Separator orientation="vertical" className="h-4" />
@@ -102,7 +102,7 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                                                     variant="outline"
                                                     size="sm"
                                                     className="h-8 px-3"
-                                                    onClick={() => {/* API Settings functionality */}}
+                                                    onClick={() => {/* API Settings functionality */ }}
                                                 >
                                                     <Key className="h-4 w-4 mr-2" />
                                                     API
@@ -138,8 +138,8 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                         </div>                        <AccountButton />
                     </div>
                 </div>
+                </div>
             </div>
-        </div>
         </TooltipProvider>
     )
 }
