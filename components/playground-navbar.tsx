@@ -29,7 +29,7 @@ interface PlaygroundNavbarProps {
 
 export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
     const [showGitHubStars, setShowGitHubStars] = useState(true)
-    const { isSignedIn, isLoaded } = useUser()
+    const authEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
 
     return (
         <TooltipProvider>
@@ -63,83 +63,70 @@ export function PlaygroundNavbar({ presets }: PlaygroundNavbarProps) {
                             className="mr-4"
                         />
                     )}
-                        {/* Authenticated user components with animation */}
-                        <AnimatePresence mode="wait">
-                            {isLoaded && isSignedIn && (
-                                <motion.div
-                                    key="auth-components"
-                                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
-                                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
-                                    transition={{
-                                        duration: 0.4,
-                                        ease: "easeOut",
-                                        staggerChildren: 0.1
-                                    }}
-                                    className="flex items-center space-x-1.5"
-                                >
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                    >
-                                        <PresetSelector presets={presets} />
-                                    </motion.div>                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.2 }}
-                                    >
-                                        <PresetSave />
-                                    </motion.div>
-                                    <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.3 }}
-                                    >
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 px-3"
-                                                    onClick={() => {/* API Settings functionality */ }}
-                                                >
-                                                    <Key className="h-4 w-4 mr-2" />
-                                                    API
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>API Settings & Keys</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                            {isLoaded && !isSignedIn && (
-                                <motion.div
-                                    key="auth-prompt"
-                                    initial={{ opacity: 0, x: 20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    exit={{ opacity: 0, x: 20 }}
-                                    transition={{ duration: 0.3, ease: "easeOut" }}
-                                >
-                                    <AuthPrompt />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {authEnabled && (
+                            <NavbarAuthArea presets={presets} />
+                        )}
 
                         <div className="hidden space-x-1.5 md:flex flex-shrink-0">
                             <CodeViewer />
                             <PresetShare />
                         </div>
                         <ModeToggle />
-                        <div className="flex items-center px-3">
-                            <div className="w-1 h-1 bg-border rounded-full"></div>
-                        </div>                        <AccountButton />
+                        {authEnabled && (
+                            <>
+                                <div className="flex items-center px-3">
+                                    <div className="w-1 h-1 bg-border rounded-full"></div>
+                                </div>
+                                <AccountButton />
+                            </>
+                        )}
                     </div>
                 </div>
                 </div>
             </div>
         </TooltipProvider>
+    )
+}
+
+function NavbarAuthArea({ presets }: { presets: Preset[] }) {
+    const { isSignedIn, isLoaded } = useUser()
+    return (
+        <AnimatePresence mode="wait">
+            {isLoaded && isSignedIn && (
+                <motion.div
+                    key="auth-components"
+                    initial={{ opacity: 0, scale: 0.8, x: -20 }}
+                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                    exit={{ opacity: 0, scale: 0.8, x: -20 }}
+                    transition={{ duration: 0.4, ease: "easeOut", staggerChildren: 0.1 }}
+                    className="flex items-center space-x-1.5"
+                >
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                        <PresetSelector presets={presets} />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                        <PresetSave />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="outline" size="sm" className="h-8 px-3" onClick={() => { }}>
+                                    <Key className="h-4 w-4 mr-2" />
+                                    API
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>API Settings & Keys</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </motion.div>
+                </motion.div>
+            )}
+            {isLoaded && !isSignedIn && (
+                <motion.div key="auth-prompt" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ duration: 0.3, ease: "easeOut" }}>
+                    <AuthPrompt />
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }

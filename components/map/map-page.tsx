@@ -492,17 +492,21 @@ export default function MapPage() {
       const text = leg?.duration?.text || null;
       setWalkDuration(text);
       let mp: LatLng | null = null;
-      const r: any = result.routes?.[0];
+      const r = result.routes?.[0] as google.maps.DirectionsRoute | undefined;
       if (r?.overview_path && Array.isArray(r.overview_path) && r.overview_path.length) {
         const i = Math.floor(r.overview_path.length / 2);
-        const ll = r.overview_path[i];
+        const ll = r.overview_path[i] as google.maps.LatLng;
         if (ll && typeof ll.lat === 'function' && typeof ll.lng === 'function') mp = { lat: ll.lat(), lng: ll.lng() };
       } else if (r?.legs && r.legs[0]?.steps) {
-        const pts: any[] = [];
-        r.legs[0].steps.forEach((s: any) => { if (s?.path && Array.isArray(s.path)) pts.push(...s.path); });
+        const steps = r.legs[0].steps as google.maps.DirectionsStep[];
+        const pts: google.maps.LatLng[] = [];
+        steps.forEach((s) => {
+          const maybePath = (s as unknown as { path?: google.maps.LatLng[] }).path;
+          if (maybePath && Array.isArray(maybePath)) pts.push(...maybePath);
+        });
         if (pts.length) {
           const i = Math.floor(pts.length / 2);
-          const ll = pts[i];
+          const ll = pts[i] as google.maps.LatLng;
           if (ll && typeof ll.lat === 'function' && typeof ll.lng === 'function') mp = { lat: ll.lat(), lng: ll.lng() };
         }
       }

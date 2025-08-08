@@ -5,9 +5,11 @@ import { useUser } from "@clerk/nextjs"
 import { toast } from "sonner"
 
 export function SimpleAuthHandler() {
+    const authEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
     const { user, isSignedIn, isLoaded } = useUser()
 
     useEffect(() => {
+        if (!authEnabled) return
         if (!isLoaded) return        // Check if this is the first time loading after sign in
         const hasJustSignedIn = localStorage.getItem('clerk-sign-in-pending')
 
@@ -45,7 +47,8 @@ export function SimpleAuthHandler() {
             })
         }
 
-    }, [user, isSignedIn, isLoaded])
+    }, [authEnabled, user, isSignedIn, isLoaded])
 
+    if (!authEnabled) return null
     return null
 }

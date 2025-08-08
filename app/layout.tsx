@@ -26,6 +26,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const authEnabled = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -36,13 +37,18 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem
         >
-          <ClerkThemeProvider>
-            <SimpleAuthHandler />
-            <div className="min-h-screen">
-              {children}
-            </div>
-            <Toaster expand={false} closeButton position="bottom-right" />
-          </ClerkThemeProvider>
+          {authEnabled ? (
+            <ClerkThemeProvider>
+              <SimpleAuthHandler />
+              <div className="min-h-screen">{children}</div>
+              <Toaster expand={false} closeButton position="bottom-right" />
+            </ClerkThemeProvider>
+          ) : (
+            <>
+              <div className="min-h-screen">{children}</div>
+              <Toaster expand={false} closeButton position="bottom-right" />
+            </>
+          )}
         </ThemeProvider>
       </body>
     </html>
