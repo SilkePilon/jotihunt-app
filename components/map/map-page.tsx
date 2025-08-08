@@ -638,7 +638,7 @@ export default function MapPage() {
 
   useEffect(() => {
     openPopupRef.current = (it, oc) => openPopup(it, oc);
-  }, [markerColors]);
+  }, [markerColors, visited]);
 
   useEffect(() => {
     let cancelled = false;
@@ -748,51 +748,7 @@ export default function MapPage() {
       | google.maps.OverlayView
     > = {};
     if (!showMarkers || groups.length === 0) return;
-    function buildHouseIcon(
-      size = 28,
-      bg = '#ffffff',
-      border = '#e5e7eb',
-      radius = 6,
-      glyph = '#111827'
-    ): google.maps.Icon {
-      const pad = 3;
-      const svg = `<?xml version='1.0'?>
-      <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-        <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
-        size - 1
-      }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
-        <g fill='${glyph}' transform='translate(${pad},${pad})'>
-          <path d='M ${size / 2 - pad} ${pad} L ${size - 2 * pad} ${
-        size / 2
-      } L ${size - 2 * pad} ${size - 2 * pad} L ${2 * pad} ${
-        size - 2 * pad
-      } L ${2 * pad} ${size / 2} Z' fill='none'/>
-        </g>
-        <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${size / 2} L ${
-        size - pad - 6
-      } ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${
-        size / 2
-      } Z' fill='none'/>
-        <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${size / 2} L ${
-        size - pad - 6
-      } ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${
-        size / 2
-      } Z' stroke='none'/>
-        <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${
-        size / 2 - pad - 7
-      } h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${
-        size / 2 - pad - 1
-      } h -4 Z' fill='${glyph}'/>
-      </svg>`;
-      const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-      return {
-        url,
-        size: new google.maps.Size(size, size),
-        scaledSize: new google.maps.Size(size, size),
-        anchor: new google.maps.Point(size / 2, size / 2),
-      } as google.maps.Icon;
-    }
-    groups.forEach((item, idx) => {
+    groups.forEach((item) => {
       if (mapId && google.maps.marker?.AdvancedMarkerElement) {
         const container = document.createElement('div');
         const root = createRoot(container);
@@ -983,7 +939,7 @@ export default function MapPage() {
         existingBadge.remove();
       }
     });
-  }, [showMarkers, isReady, groupsKey, mapId, baseMap]);
+  }, [showMarkers, isReady, groupsKey, mapId, baseMap, visited]);
 
   useEffect(() => {
     Object.entries(markerContainersRef.current).forEach(([id, container]) => {
@@ -1057,8 +1013,9 @@ export default function MapPage() {
       const container = markerContainersRef.current[g.id];
       if (container) return; // DOM-based marker handled by DOM badge above
       const idx = markersRef.current.findIndex((m) => {
-        if ('getPosition' in (m as any)) {
-          const pos = (m as google.maps.Marker).getPosition();
+        const classic = m as google.maps.Marker;
+        if (typeof classic.getPosition === 'function') {
+          const pos = classic.getPosition();
           return (
             !!pos &&
             Math.abs(pos.lat() - g.position.lat) < 1e-6 &&
@@ -1119,7 +1076,7 @@ export default function MapPage() {
     const bounds = new google.maps.LatLngBounds();
     groups.forEach((g) => bounds.extend(g.position));
     mapRef.current.fitBounds(bounds, 48);
-  }, [groupsKey, isReady]);
+  }, [groupsKey, groups, isReady]);
 
   useEffect(() => {
     return () => {
@@ -1168,7 +1125,7 @@ export default function MapPage() {
         areaPolygonsRef.current[c] = null;
       });
     };
-  }, [isReady, groupsKey, markerColors]);
+  }, [isReady, groupsKey, groups, markerColors]);
 
   useEffect(() => {
     if (!isReady || !mapRef.current) return;
@@ -1271,9 +1228,11 @@ export default function MapPage() {
                 <Button
                   size="icon"
                   className={`h-8 w-8 rounded-lg border-2 focus:bg-inherit active:bg-inherit hover:opacity-100 focus:opacity-100 active:opacity-100 transition-none ${calcBtnClasses} ${calcBtnHoverBg}`}
-                  onClick={() =>
-                    computeWalkingRouteBetween(a.position, b.position)
-                  }
+                  onClick={() => {
+                    (async () => {
+                      await computeWalkingRouteBetween(a.position, b.position);
+                    })();
+                  }}
                 >
                   <Route className="w-3.5 h-3.5" />
                 </Button>
@@ -1298,6 +1257,7 @@ export default function MapPage() {
     selectedMarkerIds,
     isReady,
     groupsKey,
+    groups,
     walkDuration,
     routeMidpoint,
     markerColors,
