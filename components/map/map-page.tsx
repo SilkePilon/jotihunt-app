@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
-import { MapPin, Route, Satellite, Layers, Car, Palette, LocateFixed, Compass } from 'lucide-react';
+import { MapPin, Route, Satellite, Layers, Car, Palette, LocateFixed, Compass, Home } from 'lucide-react';
 import { PlaygroundNavbar } from '@/components/playground-navbar';
 import { useTheme } from 'next-themes';
 import { presets } from '@/app/data/presets';
@@ -342,10 +342,20 @@ export default function MapPage() {
     markerRootsRef.current = [];
     markerContainersRef.current = {};
     if (!showMarkers || groups.length === 0) return;
-    function buildSquareIcon(size = 28, fill = '#ffffff', stroke = '#e5e7eb', radius = 6): google.maps.Icon {
-      const svg = `<?xml version='1.0'?>\n      <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>\n        <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${fill}' stroke='${stroke}'/>\n      </svg>`;
+    function buildHouseIcon(size = 28, bg = '#ffffff', border = '#e5e7eb', radius = 6, glyph = '#111827'): google.maps.Icon {
+      const pad = 3;
+      const svg = `<?xml version='1.0'?>
+      <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
+        <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+        <g fill='${glyph}' transform='translate(${pad},${pad})'>
+          <path d='M ${size/2 - pad} ${pad} L ${size - 2*pad} ${size/2} L ${size - 2*pad} ${size - 2*pad} L ${2*pad} ${size - 2*pad} L ${2*pad} ${size/2} Z' fill='none'/>
+        </g>
+        <path d='M ${size/2} ${pad + 6} L ${size - pad - 6} ${size/2} L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${size/2} Z' fill='none'/>
+        <path d='M ${size/2} ${pad + 6} L ${size - pad - 6} ${size/2} L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${size/2} Z' stroke='none'/>
+        <path d='M ${size/2} ${pad + 7} l ${size/2 - pad - 7} ${size/2 - pad - 7} h -4 v ${size/2 - pad - 1} h -${size - 2*pad - 6} v -${size/2 - pad - 1} h -4 Z' fill='${glyph}'/>
+      </svg>`;
       const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-      return { url, size: new google.maps.Size(size, size), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size / 2, size / 2), labelOrigin: new google.maps.Point(size / 2, size / 2 + 1) } as google.maps.Icon;
+      return { url, size: new google.maps.Size(size, size), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size / 2, size / 2) } as google.maps.Icon;
     }
     groups.forEach((item, idx) => {
       if (mapId && google.maps.marker?.AdvancedMarkerElement) {
@@ -353,8 +363,14 @@ export default function MapPage() {
         const root = createRoot(container);
         markerRootsRef.current.push(root);
         root.render(
-          <Button variant="secondary" size="sm" className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'} title={item.name} aria-label={`Locatie ${idx + 1}: ${item.name}`}>
-            {String(idx + 1)}
+          <Button
+            variant="secondary"
+            size="sm"
+            className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+            title={item.name}
+            aria-label={`Scouting groep: ${item.name}`}
+          >
+            <Home className="w-4 h-4" />
           </Button>
         );
         markerContainersRef.current[item.id] = container;
@@ -375,8 +391,14 @@ export default function MapPage() {
         const root = createRoot(container);
         markerRootsRef.current.push(root);
         root.render(
-          <Button variant="secondary" size="sm" className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'} title={item.name} aria-label={`Locatie ${idx + 1}: ${item.name}`}>
-            {String(idx + 1)}
+          <Button
+            variant="secondary"
+            size="sm"
+            className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+            title={item.name}
+            aria-label={`Scouting groep: ${item.name}`}
+          >
+            <Home className="w-4 h-4" />
           </Button>
         );
         markerContainersRef.current[item.id] = container;
@@ -387,7 +409,7 @@ export default function MapPage() {
         domMarker.setMap(mapRef.current!);
         markersRef.current.push(domMarker);
       } else {
-        const marker = new google.maps.Marker({ position: item.position, map: mapRef.current!, icon: buildSquareIcon(), label: { text: String(idx + 1), color: '#111827', fontSize: '11px', fontWeight: '600' } as google.maps.MarkerLabel });
+  const marker = new google.maps.Marker({ position: item.position, map: mapRef.current!, title: item.name, icon: buildHouseIcon() });
         marker.addListener('click', () => {
           setSelectedMarkerIds((prev) => { if (prev.includes(item.id)) return prev.filter((x) => x !== item.id); if (prev.length < 2) return [...prev, item.id]; return [prev[1], item.id]; });
           openPopupRef.current?.(item);
