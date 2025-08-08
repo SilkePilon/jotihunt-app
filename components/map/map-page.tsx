@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import {
   Tooltip,
@@ -17,28 +16,28 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import {
-  MapPin,
-  Route,
-  Satellite,
-  Layers,
-  Car,
-  Palette,
-  LocateFixed,
-  Compass,
-  Home,
-  Check,
-  X,
-  User,
-} from 'lucide-react';
+import { MapPin, Route, Car, Palette, LocateFixed, Home, Check, X } from 'lucide-react';
 import { PlaygroundNavbar } from '@/components/playground-navbar';
 import { useTheme } from 'next-themes';
 import { presets } from '@/app/data/presets';
 import { SidebarProvider } from '@/components/animate-ui/radix/sidebar';
 import { createRoot, Root } from 'react-dom/client';
+import { MapControlsCard } from './map-controls-card';
+import { CoordinateInputCard } from './coordinate-input-card';
+import { useUserLocation } from '../../hooks/use-user-location';
 
-type LatLng = google.maps.LatLngLiteral;
-type MarkerColor = 'orange' | 'blue' | 'red' | 'purple';
+import {
+  LatLng,
+  MarkerColor,
+  parseGroupPosition,
+  parseGroupId,
+  parseGroupName,
+  extractDetail,
+  convexHullLatLng,
+  colorStyles,
+  parseCoordInput,
+  isWithinNetherlands,
+} from './map-utils';
 
 export default function MapPage() {
   const { resolvedTheme } = useTheme();
@@ -105,20 +104,10 @@ export default function MapPage() {
   const areaPolygonsRef = useRef<
     Record<MarkerColor, google.maps.Polygon | null>
   >({ orange: null, blue: null, red: null, purple: null });
-  const userMarkerRef = useRef<
-    | google.maps.marker.AdvancedMarkerElement
-    | google.maps.Marker
-    | google.maps.OverlayView
-    | null
-  >(null);
-  const userMarkerRootRef = useRef<Root | null>(null);
-  const userMarkerContainerRef = useRef<HTMLDivElement | null>(null);
-  const geoWatchIdRef = useRef<number | null>(null);
-  const requestLocationRef = useRef<(() => void) | null>(null);
+  
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
   const [baseMap, setBaseMap] = useState<'roadmap' | 'satellite'>('satellite');
   const [use3D, setUse3D] = useState(true);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -249,6 +238,12 @@ export default function MapPage() {
     []
   );
   const mapId = useMemo(() => process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || '', []);
+  const userLocationApi = useUserLocation(isReady, mapRef, mapId) as unknown as {
+    locationError: string | null;
+    requestLocation: () => void;
+    clearLocationError: () => void;
+  };
+  const { locationError, requestLocation, clearLocationError } = userLocationApi;
 
   const subscriptionsUrl = useMemo(() => {
     if (useArchiveData) {
@@ -261,130 +256,7 @@ export default function MapPage() {
     return '/api/jotihunt/subscriptions';
   }, [useArchiveData]);
 
-  function toNumber(value: unknown): number | null {
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string') {
-      const n = parseFloat(value.replace(',', '.'));
-      return Number.isFinite(n) ? n : null;
-    }
-    return null;
-  }
-
-  function parseGroupPosition(record: unknown): LatLng | null {
-    if (!record || typeof record !== 'object') return null;
-    const obj = record as Record<string, unknown>;
-    const latCandidate = obj['lat'] ?? obj['latitude'];
-    const lngCandidate =
-      obj['lng'] ?? obj['lon'] ?? obj['long'] ?? obj['longitude'];
-    const latNum = toNumber(latCandidate);
-    const lngNum = toNumber(lngCandidate);
-    if (latNum !== null && lngNum !== null) return { lat: latNum, lng: lngNum };
-    const latitude = obj['latitude'];
-    const longitude = obj['longitude'];
-    const lat2 = toNumber(latitude);
-    const lng2 = toNumber(longitude);
-    if (lat2 !== null && lng2 !== null) return { lat: lat2, lng: lng2 };
-    const location = obj['location'];
-    if (location && typeof location === 'object') {
-      const loc = location as Record<string, unknown>;
-      const llat = toNumber(loc['lat']);
-      const llng = toNumber(
-        loc['lng'] ?? loc['lon'] ?? loc['long'] ?? loc['longitude']
-      );
-      if (llat !== null && llng !== null) return { lat: llat, lng: llng };
-      const coordinates = loc['coordinates'];
-      if (Array.isArray(coordinates) && coordinates.length >= 2) {
-        const [lngCoord, latCoord] = coordinates as unknown[];
-        const lat3 = toNumber(latCoord);
-        const lng3 = toNumber(lngCoord);
-        if (lat3 !== null && lng3 !== null) return { lat: lat3, lng: lng3 };
-      }
-    }
-    const coordinatesStr = obj['coordinates'];
-    if (typeof coordinatesStr === 'string' && coordinatesStr.includes(',')) {
-      const parts = coordinatesStr
-        .split(',')
-        .map((p) => parseFloat((p as string).trim().replace(',', '.')));
-      if (
-        parts.length >= 2 &&
-        !Number.isNaN(parts[0]) &&
-        !Number.isNaN(parts[1])
-      )
-        return { lat: parts[0], lng: parts[1] };
-    }
-    return null;
-  }
-
-  function parseGroupId(record: unknown): string {
-    const obj = record as Record<string, unknown>;
-    if (obj['id']) return String(obj['id']);
-    if (obj['slug']) return String(obj['slug']);
-    if (obj['code']) return String(obj['code']);
-    if (obj['name']) return String(obj['name']);
-    return Math.random().toString(36).slice(2);
-  }
-
-  function parseGroupName(record: unknown): string {
-    const obj = record as Record<string, unknown>;
-    if (obj['name']) return String(obj['name']);
-    if (obj['title']) return String(obj['title']);
-    if (obj['group']) return String(obj['group']);
-    return 'Onbekend';
-  }
-
-  function extractDetail<T = unknown>(
-    rec: Record<string, unknown>,
-    key: string
-  ): T | null {
-    if (key in rec && rec[key] != null) return rec[key] as T;
-    return null;
-  }
-
-  function convexHullLatLng(points: LatLng[]): LatLng[] {
-    if (points.length <= 1) return points.slice();
-    const pts = points
-      .map((p) => ({ x: p.lng, y: p.lat, src: p }))
-      .sort((a, b) => (a.x === b.x ? a.y - b.y : a.x - b.x));
-    const cross = (
-      o: { x: number; y: number },
-      a: { x: number; y: number },
-      b: { x: number; y: number }
-    ) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-    const lower: { x: number; y: number; src: LatLng }[] = [];
-    for (const p of pts) {
-      while (
-        lower.length >= 2 &&
-        cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
-      )
-        lower.pop();
-      lower.push(p);
-    }
-    const upper: { x: number; y: number; src: LatLng }[] = [];
-    for (let i = pts.length - 1; i >= 0; i--) {
-      const p = pts[i];
-      while (
-        upper.length >= 2 &&
-        cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
-      )
-        upper.pop();
-      upper.push(p);
-    }
-    const hull = lower
-      .slice(0, lower.length - 1)
-      .concat(upper.slice(0, upper.length - 1));
-    return hull.map((h) => h.src);
-  }
-
-  function colorStyles(c: MarkerColor): {
-    fillColor: string;
-    strokeColor: string;
-  } {
-    if (c === 'orange') return { fillColor: '#f97316', strokeColor: '#f97316' };
-    if (c === 'blue') return { fillColor: '#3b82f6', strokeColor: '#3b82f6' };
-    if (c === 'red') return { fillColor: '#ef4444', strokeColor: '#ef4444' };
-    return { fillColor: '#a855f7', strokeColor: '#a855f7' };
-  }
-
+  
   useEffect(() => {
     let active = true;
     async function loadGroups() {
@@ -457,77 +329,7 @@ export default function MapPage() {
     }
   }
 
-  // Convert RD (Rijksdriehoekstelsel) to WGS84 lat/lng
-  function rdToWgs(x: number, y: number): LatLng {
-    const x0 = 155000;
-    const y0 = 463000;
-    const phi0 = 52.15517440;
-    const lam0 = 5.38720621;
-    const dx = (x - x0) * 1e-5;
-    const dy = (y - y0) * 1e-5;
-    const phi =
-      phi0 +
-      (3235.65389 * dy +
-        -32.58297 * dx * dx +
-        -0.2475 * dy * dy +
-        -0.84978 * dx * dx * dy +
-        -0.0655 * dy * dy * dy +
-        -0.01709 * dx * dx * dy * dy +
-        -0.00738 * dx +
-        0.0053 * Math.pow(dx, 4) +
-        -0.00039 * dx * dx * Math.pow(dy, 3) +
-        0.00033 * Math.pow(dx, 3) +
-        -0.00012 * dx * dx * Math.pow(dy, 4)) /
-        3600;
-    const lam =
-      lam0 +
-      (5260.52916 * dx +
-        105.94684 * dx * dy +
-        2.45656 * dx * dy * dy +
-        -0.81885 * Math.pow(dx, 3) +
-        0.05594 * dx * Math.pow(dy, 3) +
-        -0.05607 * Math.pow(dx, 3) * dy +
-        0.01199 * dy +
-        -0.00256 * Math.pow(dx, 3) * dy * dy +
-        0.00128 * dx * Math.pow(dy, 4) +
-        0.00022 * dy * dy +
-        -0.00022 * dx * dx +
-        0.00026 * Math.pow(dx, 5)) /
-        3600;
-    return { lat: phi, lng: lam };
-  }
-
-  function parseCoordInput(val: string): LatLng | null {
-    const s = val.trim();
-    if (!s) return null;
-    const parts = s.replace(',', ' ').split(/\s+/).filter(Boolean);
-    if (parts.length !== 2) return null;
-    const a = parts[0];
-    const b = parts[1];
-    const fa = parseFloat(a);
-    const fb = parseFloat(b);
-    // If decimals and plausible lat/lng, assume WGS84
-    if (
-      (a.includes('.') || a.includes(',')) || (b.includes('.') || b.includes(','))
-    ) {
-      if (isFinite(fa) && isFinite(fb) && Math.abs(fa) <= 90 && Math.abs(fb) <= 180) {
-        return { lat: fa, lng: fb };
-      }
-      return null;
-    }
-    // Otherwise assume RD shorthand like "1234 5678" → scale to meters
-    const xa = parseInt(a, 10);
-    const yb = parseInt(b, 10);
-    if (!Number.isFinite(xa) || !Number.isFinite(yb)) return null;
-    let x = xa;
-    let y = yb;
-    // Heuristics: 4 digits → *100, 5 digits → *10
-    if (x < 10000) x *= 100;
-    else if (x < 100000) x *= 10;
-    if (y < 10000) y *= 100;
-    else if (y < 100000) y *= 10;
-    return rdToWgs(x, y);
-  }
+  
 
   function addCustomPointFromInput() {
     const pos = parseCoordInput(coordInput);
@@ -553,11 +355,7 @@ export default function MapPage() {
     }
   }
 
-  function isWithinNetherlands(pos: LatLng): boolean {
-    const { lat, lng } = pos;
-    // Rough bounding box covering NL mainland
-    return lat >= 50.5 && lat <= 53.7 && lng >= 3.3 && lng <= 7.3;
-  }
+  
 
   async function copyGoogleMapsLink() {
     if (!lastCustomPoint) return;
@@ -899,216 +697,7 @@ export default function MapPage() {
     mapRef.current.setHeading(use3D ? 45 : 0);
   }, [use3D, isReady]);
 
-  useEffect(() => {
-    if (!isReady || !mapRef.current) return;
-    const hasGeo = typeof navigator !== 'undefined' && !!navigator.geolocation;
-    if (!hasGeo) return;
-    function renderUserMarkerContent(container: HTMLElement) {
-      const root = createRoot(container);
-      userMarkerRootRef.current = root;
-      root.render(
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="secondary"
-                size="sm"
-                className={
-                  'relative h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
-                }
-                aria-label={`Mijn locatie`}
-              >
-                <User className="w-4 h-4" />
-                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Mijn locatie</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-    function createOrUpdateUserMarker(pos: LatLng) {
-      if (userMarkerRef.current) {
-        const m = userMarkerRef.current as google.maps.Marker;
-        if (typeof (m as any).setPosition === 'function') {
-          m.setPosition(pos as any);
-          return;
-        }
-        const adv =
-          userMarkerRef.current as google.maps.marker.AdvancedMarkerElement & {
-            position?: LatLng;
-          };
-        if (adv && 'position' in adv) {
-          (adv as any).position = pos;
-          return;
-        }
-        const ov = userMarkerRef.current as google.maps.OverlayView & {
-          position?: LatLng;
-          draw?: () => void;
-        };
-        if (ov && 'position' in ov) {
-          (ov as any).position = pos;
-          if (typeof ov.draw === 'function') ov.draw();
-          return;
-        }
-      }
-      if (mapId && google.maps.marker?.AdvancedMarkerElement) {
-        const container = document.createElement('div');
-        userMarkerContainerRef.current = container;
-        renderUserMarkerContent(container);
-        const adv = new google.maps.marker.AdvancedMarkerElement({
-          position: pos,
-          map: mapRef.current!,
-          content: container,
-        });
-        userMarkerRef.current = adv;
-        return;
-      }
-      if (google.maps.OverlayView) {
-        class DomUserMarker extends google.maps.OverlayView {
-          position: LatLng;
-          container: HTMLDivElement;
-          constructor(p: LatLng, content: HTMLElement) {
-            super();
-            this.position = p;
-            this.container = document.createElement('div');
-            this.container.style.position = 'absolute';
-            this.container.appendChild(content);
-          }
-          onAdd() {
-            this.getPanes()?.overlayMouseTarget.appendChild(this.container);
-          }
-          draw() {
-            const projection = this.getProjection();
-            if (!projection) return;
-            const point = projection.fromLatLngToDivPixel(
-              new google.maps.LatLng(this.position)
-            );
-            if (!point) return;
-            this.container.style.left = `${point.x}px`;
-            this.container.style.top = `${point.y}px`;
-            this.container.style.transform = 'translate(-50%, -50%)';
-          }
-          onRemove() {
-            this.container.remove();
-          }
-        }
-        const container = document.createElement('div');
-        userMarkerContainerRef.current = container;
-        renderUserMarkerContent(container);
-        const domMarker = new DomUserMarker(pos, container);
-        domMarker.setMap(mapRef.current!);
-        userMarkerRef.current = domMarker;
-        return;
-      }
-      const size = 28;
-      const bg = '#ffffff';
-      const border = '#e5e7eb';
-      const radius = 6;
-      const headR = 4;
-      const headCx = size / 2;
-      const headCy = 10;
-      const bodyW = 10;
-      const bodyH = 8;
-      const bodyX = headCx - bodyW / 2;
-      const bodyY = headCy + 3;
-      const badgeR = 4;
-      const cx = size - badgeR - 2;
-      const cy = badgeR + 2;
-      const glyph = `
-        <circle cx='${headCx}' cy='${headCy}' r='${headR}' fill='#111827' />
-        <rect x='${bodyX}' y='${bodyY}' rx='3' ry='3' width='${bodyW}' height='${bodyH}' fill='#111827' />
-      `;
-      const svg = `<?xml version='1.0'?>
-        <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-          <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
-        size - 1
-      }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
-          ${glyph}
-      <circle cx='${cx}' cy='${cy}' r='${badgeR}' fill='#ef4444' stroke='#ffffff' stroke-width='1.5' />
-        </svg>`;
-      const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-      const marker = new google.maps.Marker({
-        position: pos,
-        map: mapRef.current!,
-        icon: {
-          url,
-          size: new google.maps.Size(size, size),
-          scaledSize: new google.maps.Size(size, size),
-          anchor: new google.maps.Point(size / 2, size / 2),
-        },
-      });
-      userMarkerRef.current = marker;
-    }
-    requestLocationRef.current = () => {
-      try {
-        navigator.geolocation.getCurrentPosition(
-          (p) => {
-            createOrUpdateUserMarker({
-              lat: p.coords.latitude,
-              lng: p.coords.longitude,
-            });
-            setLocationError(null);
-          },
-          (e) => {
-            const msg =
-              e && typeof e === 'object' && 'code' in e
-                ? (e as GeolocationPositionError).code === 1
-                  ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
-                  : (e as GeolocationPositionError).code === 2
-                  ? 'Locatie niet beschikbaar.'
-                  : 'Locatie aanvraag verlopen.'
-                : 'Kon locatie niet ophalen.';
-            setLocationError(msg);
-          },
-          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
-        );
-      } catch {}
-    };
-    const watchId = navigator.geolocation.watchPosition(
-      (p) => {
-        createOrUpdateUserMarker({
-          lat: p.coords.latitude,
-          lng: p.coords.longitude,
-        });
-        if (locationError) setLocationError(null);
-      },
-      (e) => {
-        const msg =
-          e && typeof e === 'object' && 'code' in e
-            ? (e as GeolocationPositionError).code === 1
-              ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
-              : (e as GeolocationPositionError).code === 2
-              ? 'Locatie niet beschikbaar.'
-              : 'Locatie aanvraag verlopen.'
-            : 'Kon locatie niet ophalen.';
-        setLocationError(msg);
-      },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
-    );
-    geoWatchIdRef.current = watchId;
-    return () => {
-      if (geoWatchIdRef.current != null) {
-        try {
-          navigator.geolocation.clearWatch(geoWatchIdRef.current);
-        } catch {}
-        geoWatchIdRef.current = null;
-      }
-      if (userMarkerRef.current) {
-        try {
-          detachMarker(userMarkerRef.current);
-        } catch {}
-        userMarkerRef.current = null;
-      }
-      if (userMarkerRootRef.current) {
-        try {
-          userMarkerRootRef.current.unmount();
-        } catch {}
-        userMarkerRootRef.current = null;
-      }
-      userMarkerContainerRef.current = null;
-    };
-  }, [isReady, mapId, locationError]);
+  
 
   useEffect(() => {
     if (!isReady || !mapRef.current) return;
@@ -1807,63 +1396,16 @@ export default function MapPage() {
               ref={mapContainerRef}
               className="absolute inset-0"
             />
-            {/* Top-left coordinate input card */}
-            <div className="absolute top-4 left-4 z-20 max-w-[95vw] pointer-events-auto">
-              <div
-                className={
-                  `bg-card ${coordOutsideNL ? 'border-2 border-red-500' : 'border'} rounded-xl shadow-sm p-1.5`
-                }
-              >
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Input
-                    value={coordInput}
-                    onChange={(e) => setCoordInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') addCustomPointFromInput();
-                    }}
-                    placeholder="1234 5678"
-                    className="h-8 w-[200px] sm:w-[260px] rounded-lg"
-                    aria-label="Coördinaten invoer"
-                  />
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg ${coordOutsideNL ? 'border-2 border-red-500' : 'border-2 border-border'}`}
-                    onClick={addCustomPointFromInput}
-                  >
-                    Toon
-                  </Button>
-                </div>
-                {lastCustomPoint && (
-                  <>
-                    <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                      {(['Alpha','Bravo','Charlie','Delta','Echo','Foxtrot'] as const).map((name) => (
-                        <Button
-                          key={name}
-                          variant="secondary"
-                          size="sm"
-                          className={`h-8 px-3 rounded-lg border-2 ${selectedHuntGroup === name ? 'border-border' : 'border-transparent'}`}
-                          onClick={() => setSelectedHuntGroup(name)}
-                        >
-                          {name}
-                        </Button>
-                      ))}
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className={`h-8 px-3 rounded-lg ${coordOutsideNL ? 'border-2 border-red-500' : 'border-2 border-border'}`}
-                        onClick={copyGoogleMapsLink}
-                        title="Kopieer Google Maps link"
-                      >
-                        Kopieer Google Maps link
-                      </Button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+            <CoordinateInputCard
+              coordInput={coordInput}
+              setCoordInput={setCoordInput}
+              onSubmit={addCustomPointFromInput}
+              lastCustomPoint={lastCustomPoint}
+              selectedHuntGroup={selectedHuntGroup}
+              onSelectHuntGroup={(name) => setSelectedHuntGroup(name)}
+              copyGoogleMapsLink={copyGoogleMapsLink}
+              coordOutsideNL={coordOutsideNL}
+            />
             {!apiKey && (
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <Card className="max-w-md w-full">
@@ -1897,7 +1439,7 @@ export default function MapPage() {
                     size="sm"
                     variant="secondary"
                     className="h-8 px-3 rounded-lg border-2 border-border"
-                    onClick={() => requestLocationRef.current?.()}
+                    onClick={() => requestLocation()}
                   >
                     Probeer opnieuw
                   </Button>
@@ -1906,7 +1448,7 @@ export default function MapPage() {
                     variant="ghost"
                     className="h-8 w-8 rounded-lg"
                     aria-label="Sluiten"
-                    onClick={() => setLocationError(null)}
+                    onClick={() => clearLocationError()}
                   >
                     ✕
                   </Button>
@@ -1914,98 +1456,22 @@ export default function MapPage() {
               </div>
             )}
             <div className="absolute bottom-4 left-4 z-20 max-w-[95vw] pointer-events-auto">
-              <TooltipProvider>
-                <div className="bg-card border rounded-xl shadow-sm p-1.5 flex flex-wrap items-center gap-1.5">
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg border-2 ${
-                      baseMap === 'roadmap'
-                        ? 'border-border'
-                        : 'border-transparent'
-                    }`}
-                    onClick={() => setBaseMap('roadmap')}
-                  >
-                    <Layers className="w-3.5 h-3.5 mr-1.5" />
-                    Roadmap
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg border-2 ${
-                      baseMap === 'satellite'
-                        ? 'border-border'
-                        : 'border-transparent'
-                    }`}
-                    onClick={() => setBaseMap('satellite')}
-                  >
-                    <Satellite className="w-3.5 h-3.5 mr-1.5" />
-                    Satellite
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg border-2 ${
-                      use3D ? 'border-border' : 'border-transparent'
-                    }`}
-                    onClick={() => setUse3D((v) => !v)}
-                  >
-                    3D
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg border-2 ${
-                      showMarkers ? 'border-border' : 'border-transparent'
-                    }`}
-                    onClick={() => setShowMarkers((v) => !v)}
-                  >
-                    <MapPin className="w-3.5 h-3.5 mr-1.5" />
-                    Markers
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className={`h-8 px-3 rounded-lg border-2 ${
-                      useArchiveData ? 'border-border' : 'border-transparent'
-                    }`}
-                    onClick={() => setUseArchiveData((v) => !v)}
-                  >
-                    Archief
-                  </Button>
-                  <div className="h-6 w-px bg-border mx-1" />
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="h-8 w-8 rounded-lg"
-                        onClick={recenter}
-                      >
-                        <LocateFixed className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Center NL</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="h-8 w-8 rounded-lg"
-                        onClick={() =>
-                          mapRef.current?.setHeading(
-                            (mapRef.current.getHeading() || 0) + 30
-                          )
-                        }
-                      >
-                        <Compass className="w-3.5 h-3.5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Draai</TooltipContent>
-                  </Tooltip>
-                </div>
-              </TooltipProvider>
+              <MapControlsCard
+                baseMap={baseMap}
+                setBaseMap={setBaseMap}
+                use3D={use3D}
+                setUse3D={setUse3D}
+                showMarkers={showMarkers}
+                setShowMarkers={setShowMarkers}
+                useArchiveData={useArchiveData}
+                setUseArchiveData={setUseArchiveData}
+                onRecenter={recenter}
+                onRotate={() =>
+                  mapRef.current?.setHeading(
+                    (mapRef.current?.getHeading() || 0) + 30
+                  )
+                }
+              />
             </div>
             {selectedMarkerIds.length > 0 && (
               <div className="absolute bottom-4 right-4 z-20 max-w-[95vw] pointer-events-auto">
