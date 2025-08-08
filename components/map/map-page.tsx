@@ -26,6 +26,7 @@ import {
   Compass,
   Home,
   Check,
+  X,
 } from 'lucide-react';
 import { PlaygroundNavbar } from '@/components/playground-navbar';
 import { useTheme } from 'next-themes';
@@ -58,20 +59,17 @@ export default function MapPage() {
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const popupOverlayRef = useRef<google.maps.OverlayView | null>(null);
   const popupRootRef = useRef<Root | null>(null);
-  const currentPopupItemRef = useRef<
-    | null
-    | {
-        id: string;
-        name: string;
-        accomodation: string | null;
-        street: string | null;
-        housenumber: number | null;
-        housenumber_addition: string | null;
-        postcode: string | null;
-        city: string | null;
-        position: LatLng;
-      }
-  >(null);
+  const currentPopupItemRef = useRef<null | {
+    id: string;
+    name: string;
+    accomodation: string | null;
+    street: string | null;
+    housenumber: number | null;
+    housenumber_addition: string | null;
+    postcode: string | null;
+    city: string | null;
+    position: LatLng;
+  }>(null);
   const openPopupRef = useRef<
     | null
     | ((
@@ -471,7 +469,9 @@ export default function MapPage() {
         : color === 'purple'
         ? `bg-purple-500 border-purple-500 text-white ${baseCard}`
         : `bg-card ${baseCard}`;
-    const secondaryTextClass = color ? 'text-white/80' : 'text-muted-foreground';
+    const secondaryTextClass = color
+      ? 'text-white/80'
+      : 'text-muted-foreground';
     popupRootRef.current.render(
       <Card className={cardClass}>
         <div className="flex items-start gap-2">
@@ -527,7 +527,10 @@ export default function MapPage() {
                   Kleur
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-auto p-2">
+              <PopoverContent
+                align="end"
+                className="w-auto p-2"
+              >
                 <div className="flex items-center gap-2">
                   <Button
                     aria-label="oranje"
@@ -692,6 +695,9 @@ export default function MapPage() {
           streetViewControl: false,
           fullscreenControl: false,
           mapTypeControl: false,
+          disableDefaultUI: true,
+          keyboardShortcuts: false,
+          clickableIcons: false,
         };
         if (mapId) Object.assign(options, { mapId });
         const map = new google.maps.Map(
@@ -771,7 +777,7 @@ export default function MapPage() {
       | google.maps.OverlayView
     > = {};
     if (!showMarkers || groups.length === 0) return;
-  groups.forEach((item) => {
+    groups.forEach((item) => {
       if (mapId && google.maps.marker?.AdvancedMarkerElement) {
         const container = document.createElement('div');
         const root = createRoot(container);
@@ -949,7 +955,7 @@ export default function MapPage() {
       const btn = container.querySelector('button') as HTMLElement | null;
       const el = btn ?? (container.firstElementChild as HTMLElement | null);
       if (!el) return;
-  el.classList.add('relative');
+      el.classList.add('relative');
       el.classList.add('border-2');
       el.classList.remove(
         'bg-card',
@@ -1000,8 +1006,8 @@ export default function MapPage() {
       if (isVisited && !existingBadge) {
         const badge = document.createElement('span');
         badge.setAttribute('data-role', 'visited-badge');
-  badge.className =
-    'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
+        badge.className =
+          'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
         el.appendChild(badge);
       } else if (!isVisited && existingBadge) {
         existingBadge.remove();
@@ -1336,6 +1342,18 @@ export default function MapPage() {
     mapRef.current.setZoom(9);
   }
 
+  function clearRoute() {
+    if (directionsRendererRef.current) {
+      try {
+        directionsRendererRef.current.setMap(
+          null as unknown as google.maps.Map
+        );
+      } catch {}
+    }
+    setWalkDuration(null);
+    setRouteMidpoint(null);
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen w-full flex flex-col">
@@ -1465,6 +1483,66 @@ export default function MapPage() {
                 </div>
               </TooltipProvider>
             </div>
+            {selectedMarkerIds.length > 0 && (
+              <div className="absolute bottom-4 right-4 z-20 max-w-[95vw] pointer-events-auto">
+                <div className="bg-card border rounded-xl shadow-sm p-1.5 flex flex-wrap items-center gap-1.5">
+                  {selectedMarkerIds.map((id) => {
+                    const g = groups.find((x) => x.id === id);
+                    if (!g) return null;
+                    return (
+                      <div
+                        key={id}
+                        className="flex items-center gap-1 h-8 rounded-lg border px-2"
+                      >
+                        <Home className="w-3.5 h-3.5 mr-1.5" />
+                        <span className="text-sm whitespace-nowrap max-w-[40vw] truncate">
+                          {g.name}
+                        </span>
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="h-7 w-7 rounded-md"
+                          title={`Focus op ${g.name}`}
+                          onClick={() => {
+                            const map = mapRef.current;
+                            if (!map) return;
+                            const currentZoom = map.getZoom() ?? 9;
+                            if (currentZoom < 15) map.setZoom(15);
+                            map.panTo(g.position);
+                          }}
+                        >
+                          <LocateFixed className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="secondary"
+                          className="h-7 w-7 rounded-md"
+                          title={`Verwijder selectie ${g.name}`}
+                          onClick={() =>
+                            setSelectedMarkerIds((prev) =>
+                              prev.filter((x) => x !== id)
+                            )
+                          }
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                  {(walkDuration || routeMidpoint) && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="h-8 px-3 rounded-lg border-2 border-border"
+                      onClick={() => clearRoute()}
+                      title="Wis route"
+                    >
+                      Wis route
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
