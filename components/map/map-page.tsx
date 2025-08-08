@@ -458,14 +458,17 @@ export default function MapPage() {
     if (!popupRootRef.current) return;
     const color = overrideColor ?? markerColors[item.id];
     const isVisited = visited[item.id] || false;
-  const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border-2 bg-card';
+    const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border-2 bg-card';
     const cardClass = baseCard;
     const borderStyle = color
       ? { borderColor: colorStyles(color as MarkerColor).strokeColor }
       : undefined;
     const secondaryTextClass = 'text-muted-foreground';
     popupRootRef.current.render(
-      <Card className={cardClass} style={borderStyle}>
+      <Card
+        className={cardClass}
+        style={borderStyle}
+      >
         <div className="flex items-start gap-2">
           <div className="flex-1">
             <div className="font-semibold leading-none mb-1">{item.name}</div>
