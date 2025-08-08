@@ -15,6 +15,7 @@ import { SidebarProvider } from '@/components/animate-ui/radix/sidebar';
 import { createRoot, Root } from 'react-dom/client';
 
 type LatLng = google.maps.LatLngLiteral;
+type MarkerColor = 'orange' | 'blue' | 'red' | 'purple';
 
 export default function MapPage() {
   const { resolvedTheme } = useTheme();
@@ -32,6 +33,7 @@ export default function MapPage() {
   const selectionPolylineRef = useRef<google.maps.Polyline | null>(null);
   const midOverlayRef = useRef<google.maps.OverlayView | null>(null);
   const midRootRef = useRef<Root | null>(null);
+  const areaPolygonsRef = useRef<Record<MarkerColor, google.maps.Polygon | null>>({ orange: null, blue: null, red: null, purple: null });
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function MapPage() {
   const [selectedMarkerIds, setSelectedMarkerIds] = useState<string[]>([]);
   const [walkDuration, setWalkDuration] = useState<string | null>(null);
   const [routeMidpoint, setRouteMidpoint] = useState<LatLng | null>(null);
-  const [markerColors, setMarkerColors] = useState<Record<string, 'orange' | 'blue' | 'red' | 'purple'>>({});
+  const [markerColors, setMarkerColors] = useState<Record<string, MarkerColor>>({});
   const [groups, setGroups] = useState<Array<{ id: string; name: string; position: LatLng; accomodation: string | null; street: string | null; housenumber: number | null; housenumber_addition: string | null; postcode: string | null; city: string | null }>>([]);
 
   const darkMapStyles: google.maps.MapTypeStyle[] = useMemo(() => ([
@@ -145,6 +147,32 @@ export default function MapPage() {
   function extractDetail<T = unknown>(rec: Record<string, unknown>, key: string): T | null {
     if (key in rec && rec[key] != null) return rec[key] as T;
     return null;
+  }
+
+  function convexHullLatLng(points: LatLng[]): LatLng[] {
+    if (points.length <= 1) return points.slice();
+    const pts = points.map((p) => ({ x: p.lng, y: p.lat, src: p })).sort((a, b) => (a.x === b.x ? a.y - b.y : a.x - b.x));
+    const cross = (o: { x: number; y: number }, a: { x: number; y: number }, b: { x: number; y: number }) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+    const lower: { x: number; y: number; src: LatLng }[] = [];
+    for (const p of pts) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+      lower.push(p);
+    }
+    const upper: { x: number; y: number; src: LatLng }[] = [];
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+      upper.push(p);
+    }
+    const hull = lower.slice(0, lower.length - 1).concat(upper.slice(0, upper.length - 1));
+    return hull.map((h) => h.src);
+  }
+
+  function colorStyles(c: MarkerColor): { fillColor: string; strokeColor: string } {
+    if (c === 'orange') return { fillColor: '#f97316', strokeColor: '#f97316' };
+    if (c === 'blue') return { fillColor: '#3b82f6', strokeColor: '#3b82f6' };
+    if (c === 'red') return { fillColor: '#ef4444', strokeColor: '#ef4444' };
+    return { fillColor: '#a855f7', strokeColor: '#a855f7' };
   }
 
   useEffect(() => {
@@ -461,6 +489,44 @@ export default function MapPage() {
   }, [groupsKey, isReady]);
 
   useEffect(() => { return () => { closePopup(); }; }, []);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    (['orange', 'blue', 'red', 'purple'] as MarkerColor[]).forEach((c) => {
+      const existing = areaPolygonsRef.current[c];
+      if (existing) existing.setMap(null);
+      areaPolygonsRef.current[c] = null;
+    });
+    const grouped: Record<MarkerColor, LatLng[]> = { orange: [], blue: [], red: [], purple: [] };
+    groups.forEach((g) => {
+      const color = markerColors[g.id];
+      if (color) grouped[color].push(g.position);
+    });
+    (['orange', 'blue', 'red', 'purple'] as MarkerColor[]).forEach((c) => {
+      const pts = grouped[c];
+  if (!pts || pts.length < 3) return;
+      const hull = convexHullLatLng(pts);
+      if (hull.length < 3) return;
+      const { fillColor, strokeColor } = colorStyles(c);
+      const poly = new google.maps.Polygon({
+        map: mapRef.current!,
+        paths: hull,
+        fillColor,
+        fillOpacity: 0.15,
+        strokeColor,
+        strokeOpacity: 0.4,
+        strokeWeight: 2,
+      });
+      areaPolygonsRef.current[c] = poly;
+    });
+    return () => {
+      (['orange', 'blue', 'red', 'purple'] as MarkerColor[]).forEach((c) => {
+        const existing = areaPolygonsRef.current[c];
+        if (existing) existing.setMap(null);
+        areaPolygonsRef.current[c] = null;
+      });
+    };
+  }, [isReady, groupsKey, markerColors]);
 
   useEffect(() => {
     if (!isReady || !mapRef.current) return;
