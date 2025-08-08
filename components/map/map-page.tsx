@@ -58,6 +58,20 @@ export default function MapPage() {
   const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const popupOverlayRef = useRef<google.maps.OverlayView | null>(null);
   const popupRootRef = useRef<Root | null>(null);
+  const currentPopupItemRef = useRef<
+    | null
+    | {
+        id: string;
+        name: string;
+        accomodation: string | null;
+        street: string | null;
+        housenumber: number | null;
+        housenumber_addition: string | null;
+        postcode: string | null;
+        city: string | null;
+        position: LatLng;
+      }
+  >(null);
   const openPopupRef = useRef<
     | null
     | ((
@@ -426,9 +440,10 @@ export default function MapPage() {
       } catch {}
       popupRootRef.current = null;
     }
+    currentPopupItemRef.current = null;
   }
 
-  function openPopup(
+  function renderPopupContent(
     item: {
       id: string;
       name: string;
@@ -442,39 +457,7 @@ export default function MapPage() {
     },
     overrideColor?: 'orange' | 'blue' | 'red' | 'purple'
   ) {
-    closePopup();
-    class PopupOverlay extends google.maps.OverlayView {
-      position: LatLng;
-      container: HTMLDivElement;
-      constructor(position: LatLng, content: HTMLElement) {
-        super();
-        this.position = position;
-        this.container = document.createElement('div');
-        this.container.style.position = 'absolute';
-        this.container.style.transform = 'translate(-50%, calc(-100% - 12px))';
-        this.container.style.zIndex = '1000';
-        this.container.appendChild(content);
-      }
-      onAdd() {
-        this.getPanes()?.overlayMouseTarget.appendChild(this.container);
-      }
-      draw() {
-        const proj = this.getProjection();
-        if (!proj) return;
-        const pt = proj.fromLatLngToDivPixel(
-          new google.maps.LatLng(this.position)
-        );
-        if (!pt) return;
-        this.container.style.left = `${pt.x}px`;
-        this.container.style.top = `${pt.y}px`;
-      }
-      onRemove() {
-        this.container.remove();
-      }
-    }
-    const holder = document.createElement('div');
-    const root = createRoot(holder);
-    popupRootRef.current = root;
+    if (!popupRootRef.current) return;
     const color = overrideColor ?? markerColors[item.id];
     const isVisited = visited[item.id] || false;
     const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border';
@@ -488,10 +471,8 @@ export default function MapPage() {
         : color === 'purple'
         ? `bg-purple-500 border-purple-500 text-white ${baseCard}`
         : `bg-card ${baseCard}`;
-    const secondaryTextClass = color
-      ? 'text-white/80'
-      : 'text-muted-foreground';
-    root.render(
+    const secondaryTextClass = color ? 'text-white/80' : 'text-muted-foreground';
+    popupRootRef.current.render(
       <Card className={cardClass}>
         <div className="flex items-start gap-2">
           <div className="flex-1">
@@ -546,10 +527,7 @@ export default function MapPage() {
                   Kleur
                 </Button>
               </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-auto p-2"
-              >
+              <PopoverContent align="end" className="w-auto p-2">
                 <div className="flex items-center gap-2">
                   <Button
                     aria-label="oranje"
@@ -558,10 +536,6 @@ export default function MapPage() {
                     className="h-7 w-7 rounded-md bg-orange-500 border-2 border-orange-500"
                     onClick={() => {
                       setMarkerColors((m) => ({ ...m, [item.id]: 'orange' }));
-                      setTimeout(
-                        () => openPopupRef.current?.(item, 'orange'),
-                        0
-                      );
                     }}
                   />
                   <Button
@@ -571,7 +545,6 @@ export default function MapPage() {
                     className="h-7 w-7 rounded-md bg-blue-500 border-2 border-blue-500"
                     onClick={() => {
                       setMarkerColors((m) => ({ ...m, [item.id]: 'blue' }));
-                      setTimeout(() => openPopupRef.current?.(item, 'blue'), 0);
                     }}
                   />
                   <Button
@@ -581,7 +554,6 @@ export default function MapPage() {
                     className="h-7 w-7 rounded-md bg-red-500 border-2 border-red-500"
                     onClick={() => {
                       setMarkerColors((m) => ({ ...m, [item.id]: 'red' }));
-                      setTimeout(() => openPopupRef.current?.(item, 'red'), 0);
                     }}
                   />
                   <Button
@@ -591,10 +563,6 @@ export default function MapPage() {
                     className="h-7 w-7 rounded-md bg-purple-500 border-2 border-purple-500"
                     onClick={() => {
                       setMarkerColors((m) => ({ ...m, [item.id]: 'purple' }));
-                      setTimeout(
-                        () => openPopupRef.current?.(item, 'purple'),
-                        0
-                      );
                     }}
                   />
                 </div>
@@ -616,7 +584,6 @@ export default function MapPage() {
                     }`}
                     onClick={() => {
                       setVisited((v) => ({ ...v, [item.id]: !v[item.id] }));
-                      setTimeout(() => openPopupRef.current?.(item, color), 0);
                     }}
                   >
                     <Check className="w-3.5 h-3.5" />
@@ -631,6 +598,57 @@ export default function MapPage() {
         </div>
       </Card>
     );
+  }
+
+  function openPopup(
+    item: {
+      id: string;
+      name: string;
+      accomodation: string | null;
+      street: string | null;
+      housenumber: number | null;
+      housenumber_addition: string | null;
+      postcode: string | null;
+      city: string | null;
+      position: LatLng;
+    },
+    overrideColor?: 'orange' | 'blue' | 'red' | 'purple'
+  ) {
+    closePopup();
+    class PopupOverlay extends google.maps.OverlayView {
+      position: LatLng;
+      container: HTMLDivElement;
+      constructor(position: LatLng, content: HTMLElement) {
+        super();
+        this.position = position;
+        this.container = document.createElement('div');
+        this.container.style.position = 'absolute';
+        this.container.style.transform = 'translate(-50%, calc(-100% - 12px))';
+        this.container.style.zIndex = '1000';
+        this.container.appendChild(content);
+      }
+      onAdd() {
+        this.getPanes()?.overlayMouseTarget.appendChild(this.container);
+      }
+      draw() {
+        const proj = this.getProjection();
+        if (!proj) return;
+        const pt = proj.fromLatLngToDivPixel(
+          new google.maps.LatLng(this.position)
+        );
+        if (!pt) return;
+        this.container.style.left = `${pt.x}px`;
+        this.container.style.top = `${pt.y}px`;
+      }
+      onRemove() {
+        this.container.remove();
+      }
+    }
+    const holder = document.createElement('div');
+    const root = createRoot(holder);
+    popupRootRef.current = root;
+    currentPopupItemRef.current = item;
+    renderPopupContent(item, overrideColor);
     const overlay = new PopupOverlay(item.position, holder);
     popupOverlayRef.current = overlay;
     overlay.setMap(mapRef.current!);
@@ -638,6 +656,11 @@ export default function MapPage() {
 
   useEffect(() => {
     openPopupRef.current = (it, oc) => openPopup(it, oc);
+  }, [markerColors, visited]);
+
+  useEffect(() => {
+    if (!popupRootRef.current || !currentPopupItemRef.current) return;
+    renderPopupContent(currentPopupItemRef.current);
   }, [markerColors, visited]);
 
   useEffect(() => {
@@ -748,7 +771,7 @@ export default function MapPage() {
       | google.maps.OverlayView
     > = {};
     if (!showMarkers || groups.length === 0) return;
-    groups.forEach((item) => {
+  groups.forEach((item) => {
       if (mapId && google.maps.marker?.AdvancedMarkerElement) {
         const container = document.createElement('div');
         const root = createRoot(container);
@@ -919,34 +942,14 @@ export default function MapPage() {
         markerById[item.id] = marker;
       }
     });
-    // After creating DOM markers, add visited badge to their DOM when needed
-    Object.entries(markerContainersRef.current).forEach(([id, container]) => {
-      const btn = container.querySelector('button') as HTMLElement | null;
-      const el = btn ?? (container.firstElementChild as HTMLElement | null);
-      if (!el) return;
-      el.classList.add('relative');
-      const existingBadge = el.querySelector(
-        '[data-role="visited-badge"]'
-      ) as HTMLElement | null;
-      const isVisited = !!visited[id];
-      if (isVisited && !existingBadge) {
-        const badge = document.createElement('span');
-        badge.setAttribute('data-role', 'visited-badge');
-        badge.className =
-          'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
-        el.appendChild(badge);
-      } else if (!isVisited && existingBadge) {
-        existingBadge.remove();
-      }
-    });
-  }, [showMarkers, isReady, groupsKey, mapId, baseMap, visited]);
+  }, [showMarkers, isReady, groupsKey, mapId, baseMap]);
 
   useEffect(() => {
     Object.entries(markerContainersRef.current).forEach(([id, container]) => {
       const btn = container.querySelector('button') as HTMLElement | null;
       const el = btn ?? (container.firstElementChild as HTMLElement | null);
       if (!el) return;
-      el.classList.add('relative');
+  el.classList.add('relative');
       el.classList.add('border-2');
       el.classList.remove(
         'bg-card',
@@ -997,8 +1000,8 @@ export default function MapPage() {
       if (isVisited && !existingBadge) {
         const badge = document.createElement('span');
         badge.setAttribute('data-role', 'visited-badge');
-        badge.className =
-          'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
+  badge.className =
+    'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
         el.appendChild(badge);
       } else if (!isVisited && existingBadge) {
         existingBadge.remove();
