@@ -1,1708 +1,1269 @@
-"use client"
+'use client';
 
-import { useState, useEffect, useRef } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useUser } from "@clerk/nextjs"
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Loader } from '@googlemaps/js-api-loader';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  Zap,
-  Globe,
-  Download,
-  Share2,
-  Code,
-  Plus,
-  X,
-  Link,
-  Sparkles,
-  Server,
-  Rocket,
-  Clock,
-  CheckCircle,
-  Edit,
-  Key,
-  Trash2,
-  Eye,
-  EyeOff,
-  BookOpen,
-  Bot,
-  Settings2,
-  SquareTerminal,
-  Users,
-  Shield,
-  Database,
-  ChevronRight,
-  LogOut,
-  CreditCard,
-  Bell
-} from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { Switch } from "@/components/animate-ui/base/switch"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CopyButton } from "@/components/animate-ui/buttons/copy"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-
-import { PlaygroundNavbar } from "@/components/playground-navbar"
-import { CodeTabs } from "@/components/animate-ui/components/code-tabs"
-import { presets } from "./data/presets"
-
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
-  SidebarProvider,
-  SidebarInset,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarFooter,
-  SidebarRail,
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
-} from "@/components/animate-ui/radix/sidebar"
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Badge } from '@/components/ui/badge';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/animate-ui/radix/collapsible"
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Separator } from '@/components/ui/separator';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/animate-ui/radix/dropdown-menu"
+  MapPin,
+  Route,
+  Settings,
+  Satellite,
+  Square,
+  LocateFixed,
+  Compass,
+  Layers,
+  Car,
+  Palette,
+} from 'lucide-react';
+import { PlaygroundNavbar } from '@/components/playground-navbar';
+import { useTheme } from 'next-themes';
+import { presets } from './data/presets';
+import { SidebarProvider } from '@/components/animate-ui/radix/sidebar';
+import { createRoot, Root } from 'react-dom/client';
 
-import { useIsMobile } from "@/hooks/use-mobile"
+type LatLng = google.maps.LatLngLiteral;
+type TravelModeString = 'DRIVING' | 'WALKING' | 'BICYCLING';
 
-export default function MCPServerGeneratorPage() {
-  const [urls, setUrls] = useState<string[]>([""])
-  const [includeTests, setIncludeTests] = useState(false)
-  const [errorHandling, setErrorHandling] = useState(true)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [isGenerated, setIsGenerated] = useState(false)
-  const [promptText, setPromptText] = useState("")
-  const [showAutocomplete, setShowAutocomplete] = useState(false)
-  const [autocompletePosition, setAutocompletePosition] = useState({ top: 0, left: 0 })
-  const [cursorPosition, setCursorPosition] = useState(0)
-  const [isTestingServer, setIsTestingServer] = useState(false)
-  const [testOutput, setTestOutput] = useState("")
-  const [serverStarted, setServerStarted] = useState(false)
-  const [apiKey, setApiKey] = useState("")
-  const [showIdeConfig, setShowIdeConfig] = useState(false)
-  const [apiKeys, setApiKeys] = useState<Array<{ id: string, name: string, key: string, createdAt: Date }>>([])
-  const [showApiKeyPopover, setShowApiKeyPopover] = useState(false)
-  const [newApiKeyName, setNewApiKeyName] = useState("")
-  const [visibleKeys, setVisibleKeys] = useState<Set<string>>(new Set())
-  const isMobile = useIsMobile()
-  const { user, isSignedIn } = useUser()
+export default function JotihuntMapPage() {
+  const { resolvedTheme } = useTheme();
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
+  const markersRef = useRef<
+    Array<
+      | google.maps.marker.AdvancedMarkerElement
+      | google.maps.Marker
+      | google.maps.OverlayView
+    >
+  >([]);
+  const markerRootsRef = useRef<Root[]>([]);
+  const markerContainersRef = useRef<Record<string, HTMLDivElement>>({});
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(
+    null
+  );
+  const directionsServiceRef = useRef<google.maps.DirectionsService | null>(
+    null
+  );
+  const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
+  const popupOverlayRef = useRef<google.maps.OverlayView | null>(null);
+  const popupRootRef = useRef<Root | null>(null);
+  const openPopupRef = useRef<
+    | null
+    | ((
+        item: {
+          id: string;
+          name: string;
+          accomodation: string | null;
+          street: string | null;
+          housenumber: number | null;
+          housenumber_addition: string | null;
+          postcode: string | null;
+          city: string | null;
+          position: LatLng;
+        },
+        overrideColor?: 'orange' | 'blue' | 'red' | 'purple'
+      ) => void)
+  >(null);
+  const selectionPolylineRef = useRef<google.maps.Polyline | null>(null);
+  const midOverlayRef = useRef<google.maps.OverlayView | null>(null);
+  const midRootRef = useRef<Root | null>(null);
 
-  // Sidebar data structure with dynamic user data
-  const sidebarData = {
-    user: {
-      name: isSignedIn && user ? (user.fullName || user.firstName || "User") : "Guest",
-      email: isSignedIn && user ? (user.primaryEmailAddress?.emailAddress || "guest@local") : "guest@local",
-      avatar: isSignedIn && user ? user.imageUrl : "/api/placeholder/32/32",
-    },
-    navMain: [
+  const [isReady, setIsReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [baseMap, setBaseMap] = useState<'roadmap' | 'satellite'>('satellite');
+  const [use3D, setUse3D] = useState(true);
+  const [showMarkers, setShowMarkers] = useState(true);
+  const [useArchiveData, setUseArchiveData] = useState(true);
+  const [selectedMarkerIds, setSelectedMarkerIds] = useState<string[]>([]);
+  const [walkDuration, setWalkDuration] = useState<string | null>(null);
+  const [routeMidpoint, setRouteMidpoint] = useState<LatLng | null>(null);
+  const [markerColors, setMarkerColors] = useState<
+    Record<string, 'orange' | 'blue' | 'red' | 'purple'>
+  >({});
+  const [groups, setGroups] = useState<
+    Array<{
+      id: string;
+      name: string;
+      position: LatLng;
+      accomodation: string | null;
+      street: string | null;
+      housenumber: number | null;
+      housenumber_addition: string | null;
+      postcode: string | null;
+      city: string | null;
+    }>
+  >([]);
+
+  const darkMapStyles: google.maps.MapTypeStyle[] = useMemo(
+    () => [
+      { elementType: 'geometry', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.stroke', stylers: [{ color: '#242f3e' }] },
+      { elementType: 'labels.text.fill', stylers: [{ color: '#746855' }] },
       {
-        title: "Generator",
-        url: "#",
-        icon: SquareTerminal,
-        isActive: true,
-        items: [
-          {
-            title: "New Server",
-            url: "#",
-          },
-          {
-            title: "Templates",
-            url: "#",
-          },
-          {
-            title: "History",
-            url: "#",
-          },
-        ],
+        featureType: 'administrative.locality',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
       },
       {
-        title: "Documentation",
-        url: "#",
-        icon: BookOpen,
-        items: [
-          {
-            title: "Getting Started",
-            url: "#",
-          },
-          {
-            title: "API Reference",
-            url: "#",
-          },
-          {
-            title: "Examples",
-            url: "#",
-          },
-          {
-            title: "Best Practices",
-            url: "#",
-          },
-        ],
+        featureType: 'poi',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#d59563' }],
       },
       {
-        title: "Testing",
-        url: "#",
-        icon: Bot,
-        items: [
-          {
-            title: "Local Testing",
-            url: "#",
-          },
-          {
-            title: "Unit Tests",
-            url: "#",
-          },
-          {
-            title: "Integration",
-            url: "#",
-          },
-        ],
+        featureType: 'poi.park',
+        elementType: 'geometry',
+        stylers: [{ color: '#263c3f' }],
       },
       {
-        title: "Settings",
-        url: "#",
-        icon: Settings2,
-        items: [
-          {
-            title: "General",
-            url: "#",
-          },
-          {
-            title: "API Keys",
-            url: "#",
-          },
-          {
-            title: "Preferences",
-            url: "#",
-          },
-        ],
+        featureType: 'poi.park',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#6b9a76' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry',
+        stylers: [{ color: '#38414e' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'geometry.stroke',
+        stylers: [{ color: '#212a37' }],
+      },
+      {
+        featureType: 'road',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#9ca5b3' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry',
+        stylers: [{ color: '#746855' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'geometry.stroke',
+        stylers: [{ color: '#1f2835' }],
+      },
+      {
+        featureType: 'road.highway',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#f3d19c' }],
+      },
+      {
+        featureType: 'transit',
+        elementType: 'geometry',
+        stylers: [{ color: '#2f3948' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'geometry',
+        stylers: [{ color: '#17263c' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'labels.text.fill',
+        stylers: [{ color: '#515c6d' }],
+      },
+      {
+        featureType: 'water',
+        elementType: 'labels.text.stroke',
+        stylers: [{ color: '#17263c' }],
       },
     ],
-    projects: [
-      {
-        name: "Weather Server",
-        url: "#",
-        icon: Globe,
-      },
-      {
-        name: "Database Tools",
-        url: "#",
-        icon: Database,
-      },
-      {
-        name: "Auth Handler",
-        url: "#",
-        icon: Shield,
-      },
-    ],
+    []
+  );
+
+  const groupsKey = useMemo(
+    () =>
+      groups
+        .map(
+          (g) =>
+            `${g.id}:${g.position.lat.toFixed(6)},${g.position.lng.toFixed(6)}`
+        )
+        .join('|'),
+    [groups]
+  );
+
+  const defaultCenter = useMemo<LatLng>(() => ({ lat: 52.1, lng: 5.3 }), []);
+  const apiKey = useMemo(
+    () => process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+    []
+  );
+  const mapId = useMemo(() => process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || '', []);
+
+  const subscriptionsUrl = useMemo(() => {
+    if (useArchiveData) {
+      const params = new URLSearchParams({
+        archive: '1',
+        ts: '20231005142154',
+      });
+      return `/api/jotihunt/subscriptions?${params.toString()}`;
+    }
+    return '/api/jotihunt/subscriptions';
+  }, [useArchiveData]);
+
+  function toNumber(value: unknown): number | null {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const n = parseFloat(value.replace(',', '.'));
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
   }
 
-  // Available tools for autocomplete
-  const availableTools = [
-    { name: 'get_weather', icon: Globe, description: 'Get current weather conditions' },
-    { name: 'get_forecast', icon: Zap, description: 'Get 5-day weather forecast' },
-    { name: 'list_locations', icon: Server, description: 'List available weather locations' }
-  ]
+  function parseGroupPosition(record: unknown): LatLng | null {
+    if (!record || typeof record !== 'object') return null;
+    const obj = record as Record<string, unknown>;
+    const latCandidate = obj['lat'] ?? obj['latitude'];
+    const lngCandidate =
+      obj['lng'] ?? obj['lon'] ?? obj['long'] ?? obj['longitude'];
+    const latNum = toNumber(latCandidate);
+    const lngNum = toNumber(lngCandidate);
+    if (latNum !== null && lngNum !== null) return { lat: latNum, lng: lngNum };
+    const latitude = obj['latitude'];
+    const longitude = obj['longitude'];
+    const lat2 = toNumber(latitude);
+    const lng2 = toNumber(longitude);
+    if (lat2 !== null && lng2 !== null) return { lat: lat2, lng: lng2 };
+    const location = obj['location'];
+    if (location && typeof location === 'object') {
+      const loc = location as Record<string, unknown>;
+      const llat = toNumber(loc['lat']);
+      const llng = toNumber(
+        loc['lng'] ?? loc['lon'] ?? loc['long'] ?? loc['longitude']
+      );
+      if (llat !== null && llng !== null) return { lat: llat, lng: llng };
+      const coordinates = loc['coordinates'];
+      if (Array.isArray(coordinates) && coordinates.length >= 2) {
+        const [lngCoord, latCoord] = coordinates as unknown[];
+        const lat3 = toNumber(latCoord);
+        const lng3 = toNumber(lngCoord);
+        if (lat3 !== null && lng3 !== null) return { lat: lat3, lng: lng3 };
+      }
+    }
+    const coordinatesStr = obj['coordinates'];
+    if (typeof coordinatesStr === 'string' && coordinatesStr.includes(',')) {
+      const parts = coordinatesStr
+        .split(',')
+        .map((p) => parseFloat((p as string).trim().replace(',', '.')));
+      if (
+        parts.length >= 2 &&
+        !Number.isNaN(parts[0]) &&
+        !Number.isNaN(parts[1])
+      )
+        return { lat: parts[0], lng: parts[1] };
+    }
+    return null;
+  }
 
-  const autocompleteRef = useRef<HTMLDivElement>(null)
+  function parseGroupId(record: unknown): string {
+    const obj = record as Record<string, unknown>;
+    if (obj['id']) return String(obj['id']);
+    if (obj['slug']) return String(obj['slug']);
+    if (obj['code']) return String(obj['code']);
+    if (obj['name']) return String(obj['name']);
+    return Math.random().toString(36).slice(2);
+  }
 
-  // Handle click outside to close autocomplete
+  function parseGroupName(record: unknown): string {
+    const obj = record as Record<string, unknown>;
+    if (obj['name']) return String(obj['name']);
+    if (obj['title']) return String(obj['title']);
+    if (obj['group']) return String(obj['group']);
+    return 'Onbekend';
+  }
+
+  function extractDetail<T = unknown>(
+    rec: Record<string, unknown>,
+    key: string
+  ): T | null {
+    if (key in rec && rec[key] != null) return rec[key] as T;
+    return null;
+  }
+
+  function buildInfoHtml(g: {
+    name: string;
+    accomodation?: string | null;
+    street?: string | null;
+    housenumber?: number | null;
+    housenumber_addition?: string | null;
+    postcode?: string | null;
+    city?: string | null;
+  }): string {
+    const addressLine = [g.street, g.housenumber].filter(Boolean).join(' ');
+    const extra = g.housenumber_addition ? ` ${g.housenumber_addition}` : '';
+    const line2 = [g.postcode || undefined, g.city || undefined]
+      .filter(Boolean)
+      .join(' ');
+    const accomodation = g.accomodation ? `<div>${g.accomodation}</div>` : '';
+    const address1 = addressLine ? `<div>${addressLine}${extra}</div>` : '';
+    const address2 = line2 ? `<div>${line2}</div>` : '';
+    return `
+      <div style="min-width:220px">
+        <div style="font-weight:600;margin-bottom:4px">${g.name}</div>
+        ${accomodation}
+        ${address1}
+        ${address2}
+      </div>`;
+  }
+
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target as Node)) {
-        setShowAutocomplete(false)
+    let active = true;
+    async function loadGroups() {
+      try {
+        const res = await fetch(subscriptionsUrl, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`Failed to load groups ${res.status}`);
+        const data = await res.json();
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray((data as Record<string, unknown>)?.['data'])
+          ? ((data as Record<string, unknown>)['data'] as unknown[])
+          : [];
+        const parsed = items
+          .map((rec) => {
+            const position = parseGroupPosition(rec);
+            if (!position) return null;
+            const obj = rec as Record<string, unknown>;
+            return {
+              id: parseGroupId(rec),
+              name: parseGroupName(rec),
+              position,
+              accomodation: extractDetail<string>(obj, 'accomodation'),
+              street: extractDetail<string>(obj, 'street'),
+              housenumber: extractDetail<number>(obj, 'housenumber'),
+              housenumber_addition: extractDetail<string>(
+                obj,
+                'housenumber_addition'
+              ),
+              postcode: extractDetail<string>(obj, 'postcode'),
+              city: extractDetail<string>(obj, 'city'),
+            };
+          })
+          .filter(
+            (
+              x
+            ): x is {
+              id: string;
+              name: string;
+              position: LatLng;
+              accomodation: string | null;
+              street: string | null;
+              housenumber: number | null;
+              housenumber_addition: string | null;
+              postcode: string | null;
+              city: string | null;
+            } => x !== null
+          );
+        if (active) setGroups(parsed);
+      } catch (e: unknown) {
+        if (active)
+          setError(e instanceof Error ? e.message : 'Failed to load groups');
       }
     }
-
-    if (showAutocomplete) {
-      document.addEventListener('mousedown', handleClickOutside)
-    }
-
+    loadGroups();
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showAutocomplete])
-
-  const addUrl = () => {
-    setUrls([...urls, ""])
-  }
-
-  const removeUrl = (index: number) => {
-    setUrls(urls.filter((_, i) => i !== index))
-  }
-
-  const updateUrl = (index: number, value: string) => {
-    const newUrls = [...urls]
-    newUrls[index] = value
-    setUrls(newUrls)
-  }
-
-  const handleGenerate = () => {
-    setIsGenerating(true)
-    setIsGenerated(false)
-    // Simulate API call
-    setTimeout(() => {
-      setIsGenerating(false)
-      setIsGenerated(true)
-    }, 3000)
-  }
-  const handleToolTag = (toolName: string) => {
-    const tag = `@${toolName}`    // Check if tag already exists
-    if (promptText.includes(tag)) {
-      return // Don&apos;t add duplicate tags
-    }
-    setPromptText(prev => tag + ' ' + prev)
-    // Focus the textarea
-    setTimeout(() => {
-      const textarea = document.getElementById('prompt') as HTMLTextAreaElement
-      if (textarea) {
-        textarea.focus()
-        textarea.setSelectionRange(tag.length + 1, tag.length + 1)
-      }
-    }, 100)
-  }
-
-  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value
-    const cursorPos = e.target.selectionStart
-    setPromptText(value)
-    setCursorPosition(cursorPos)
-
-    // Check for @ symbol to show autocomplete
-    const textBeforeCursor = value.slice(0, cursorPos)
-    const lastAtIndex = textBeforeCursor.lastIndexOf('@')
-
-    if (lastAtIndex !== -1) {
-      const textAfterAt = textBeforeCursor.slice(lastAtIndex + 1)
-      // Show autocomplete if @ is at start of word and no space after @
-      if (textAfterAt.match(/^\w*$/) && (lastAtIndex === 0 || textBeforeCursor[lastAtIndex - 1].match(/\s/))) {
-        const textarea = e.target
-        const rect = textarea.getBoundingClientRect()
-
-        // Calculate approximate position of cursor
-        const textMetrics = getTextMetrics(textBeforeCursor, textarea)
-        setAutocompletePosition({
-          top: rect.top + textMetrics.height + 25,
-          left: rect.left + textMetrics.width + 10
-        })
-        setShowAutocomplete(true)
-      } else {
-        setShowAutocomplete(false)
-      }
-    } else {
-      setShowAutocomplete(false)
-    }
-  }
-
-  const getTextMetrics = (text: string, textarea: HTMLTextAreaElement) => {
-    const canvas = document.createElement('canvas')
-    const context = canvas.getContext('2d')!
-    const style = window.getComputedStyle(textarea)
-    context.font = `${style.fontSize} ${style.fontFamily}`
-
-    const lines = text.split('\n')
-    const lastLine = lines[lines.length - 1]
-    const width = context.measureText(lastLine).width
-    const height = (lines.length - 1) * 24 // approximate line height
-
-    return { width, height }
-  }
-
-  const insertToolTag = (toolName: string) => {
-    const textBeforeCursor = promptText.slice(0, cursorPosition)
-    const textAfterCursor = promptText.slice(cursorPosition)
-    const lastAtIndex = textBeforeCursor.lastIndexOf('@')
-
-    if (lastAtIndex !== -1) {
-      const newText = textBeforeCursor.slice(0, lastAtIndex) + `@${toolName} ` + textAfterCursor
-      setPromptText(newText)
-      setShowAutocomplete(false)
-
-      // Focus and position cursor after the inserted tag
-      setTimeout(() => {
-        const textarea = document.getElementById('prompt') as HTMLTextAreaElement
-        if (textarea) {
-          const newCursorPos = lastAtIndex + toolName.length + 2
-          textarea.focus()
-          textarea.setSelectionRange(newCursorPos, newCursorPos)
-        }
-      }, 10)
-    }
-  }
-  const handleTestServer = async () => {
-    if (!serverStarted) {
-      // Start server and generate API key
-      setIsTestingServer(true);
-      setTestOutput("Starting development server...\n");
-
-      // Generate API key
-      const newApiKey = 'mcp_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-      setApiKey(newApiKey);
-
-      setTimeout(() => setTestOutput(prev => prev + "✓ Development server started\n"), 500);
-      setTimeout(() => setTestOutput(prev => prev + `✓ API key generated: ${newApiKey}\n`), 1000);
-      setTimeout(() => setTestOutput(prev => prev + "✓ Server ready for IDE integration\n"), 1500);
-      setTimeout(() => {
-        setTestOutput(prev => prev + "✓ Copy the configuration below to your IDE\n");
-        setIsTestingServer(false);
-        setServerStarted(true);
-        setShowIdeConfig(true);
-      }, 2000);
-    } else {
-      // Stop server
-      setServerStarted(false);
-      setShowIdeConfig(false);
-      setTestOutput("Development server stopped.\n");
-      setApiKey("");
-    }
-  };
-
-  const getIdeConfig = () => {
-    return {
-      "VS Code": `{
-  "mcpServers": {
-    "weather-server": {
-      "command": "node",
-      "args": ["path/to/your/weather-server/dist/server.js"],
-      "env": {
-        "API_KEY": "${apiKey}",
-        "SERVER_URL": "http://localhost:3001"
-      }
-    }
-  }
-}`
+      active = false;
     };
-  };  // API Key Management Functions
-  const generateApiKey = () => {
-    const keyId = Math.random().toString(36).substring(2, 15)
-    const keyValue = 'mcp_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-    const name = newApiKeyName || `API Key ${apiKeys.length + 1}`
+  }, [subscriptionsUrl]);
 
-    const newKey = {
-      id: keyId,
-      name: name,
-      key: keyValue,
-      createdAt: new Date(),
+  function detachMarker(
+    m:
+      | google.maps.marker.AdvancedMarkerElement
+      | google.maps.Marker
+      | google.maps.OverlayView
+  ) {
+    if ('setMap' in m && typeof m.setMap === 'function') {
+      m.setMap(null);
+    } else if ('map' in m) {
+      (m as google.maps.marker.AdvancedMarkerElement).map = null;
     }
-
-    setApiKeys(prev => [...prev, newKey])
-    setNewApiKeyName("")
-  }
-  const deleteApiKey = (keyId: string) => {
-    setApiKeys(prev => prev.filter(key => key.id !== keyId))
-    setVisibleKeys(prev => {
-      const newSet = new Set(prev)
-      newSet.delete(keyId)
-      return newSet
-    })
   }
 
-  const toggleKeyVisibility = (keyId: string) => {
-    setVisibleKeys(prev => {
-      const newSet = new Set(prev)
-      if (newSet.has(keyId)) {
-        newSet.delete(keyId)
-      } else {
-        newSet.add(keyId)
+  function closePopup() {
+    if (popupOverlayRef.current) {
+      try {
+        popupOverlayRef.current.setMap(null as unknown as google.maps.Map);
+      } catch {}
+      popupOverlayRef.current = null;
+    }
+    if (popupRootRef.current) {
+      try {
+        popupRootRef.current.unmount();
+      } catch {}
+      popupRootRef.current = null;
+    }
+  }
+
+  function openPopup(
+    item: {
+      id: string;
+      name: string;
+      accomodation: string | null;
+      street: string | null;
+      housenumber: number | null;
+      housenumber_addition: string | null;
+      postcode: string | null;
+      city: string | null;
+      position: LatLng;
+    },
+    overrideColor?: 'orange' | 'blue' | 'red' | 'purple'
+  ) {
+    closePopup();
+    class PopupOverlay extends google.maps.OverlayView {
+      position: LatLng;
+      container: HTMLDivElement;
+      constructor(position: LatLng, content: HTMLElement) {
+        super();
+        this.position = position;
+        this.container = document.createElement('div');
+        this.container.style.position = 'absolute';
+        this.container.style.transform = 'translate(-50%, calc(-100% - 12px))';
+        this.container.style.zIndex = '1000';
+        this.container.appendChild(content);
       }
-      return newSet
-    })
+      onAdd() {
+        const panes = this.getPanes();
+        if (!panes) return;
+        panes.overlayMouseTarget.appendChild(this.container);
+      }
+      draw() {
+        const projection = this.getProjection();
+        if (!projection) return;
+        const point = projection.fromLatLngToDivPixel(
+          new google.maps.LatLng(this.position)
+        );
+        if (!point) return;
+        this.container.style.left = `${point.x}px`;
+        this.container.style.top = `${point.y}px`;
+      }
+      onRemove() {
+        this.container.remove();
+      }
+    }
+    const holder = document.createElement('div');
+    const root = createRoot(holder);
+    popupRootRef.current = root;
+    const color = overrideColor ?? markerColors[item.id];
+    const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border';
+    const cardClass =
+      color === 'orange'
+        ? `bg-orange-500 border-orange-500 text-white ${baseCard}`
+        : color === 'blue'
+        ? `bg-blue-500 border-blue-500 text-white ${baseCard}`
+        : color === 'red'
+        ? `bg-red-500 border-red-500 text-white ${baseCard}`
+        : color === 'purple'
+        ? `bg-purple-500 border-purple-500 text-white ${baseCard}`
+        : `bg-card ${baseCard}`;
+    const secondaryTextClass = color
+      ? 'text-white/80'
+      : 'text-muted-foreground';
+    root.render(
+      <Card className={cardClass}>
+        <div className="flex items-start gap-2">
+          <div className="flex-1">
+            <div className="font-semibold leading-none mb-1">{item.name}</div>
+            {item.accomodation ? (
+              <div className={`text-sm ${secondaryTextClass}`}>
+                {item.accomodation}
+              </div>
+            ) : null}
+            <div className="mt-1 text-sm">
+              {[item.street, item.housenumber].filter(Boolean).join(' ')}
+              {item.housenumber_addition ? ` ${item.housenumber_addition}` : ''}
+            </div>
+            <div className={`text-sm ${secondaryTextClass}`}>
+              {[item.postcode || undefined, item.city || undefined]
+                .filter(Boolean)
+                .join(' ')}
+            </div>
+          </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-7 w-7 shrink-0"
+            onClick={() => {
+              closePopup();
+            }}
+          >
+            ✕
+          </Button>
+        </div>
+        <Separator className="my-0" />
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            size="sm"
+            className="h-8 px-3 rounded-lg"
+            onClick={() => {
+              const url = `https://www.google.com/maps/dir/?api=1&destination=${item.position.lat},${item.position.lng}&travelmode=driving`;
+              window.open(url, '_blank', 'noopener,noreferrer');
+            }}
+          >
+            <Car className="w-3.5 h-3.5 mr-1.5" />
+            Google Maps
+          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-8 px-3 rounded-lg"
+              >
+                <Palette className="w-3.5 h-3.5 mr-1.5" />
+                Kleur
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent
+              align="end"
+              className="w-auto p-2"
+            >
+              <div className="flex items-center gap-2">
+                <Button
+                  aria-label="oranje"
+                  size="icon"
+                  variant="secondary"
+                  className="h-7 w-7 rounded-md bg-orange-500 border-2 border-orange-500"
+                  onClick={() => {
+                    setMarkerColors((m) => ({ ...m, [item.id]: 'orange' }));
+                    setTimeout(() => openPopupRef.current?.(item, 'orange'), 0);
+                  }}
+                />
+                <Button
+                  aria-label="blauw"
+                  size="icon"
+                  variant="secondary"
+                  className="h-7 w-7 rounded-md bg-blue-500 border-2 border-blue-500"
+                  onClick={() => {
+                    setMarkerColors((m) => ({ ...m, [item.id]: 'blue' }));
+                    setTimeout(() => openPopupRef.current?.(item, 'blue'), 0);
+                  }}
+                />
+                <Button
+                  aria-label="rood"
+                  size="icon"
+                  variant="secondary"
+                  className="h-7 w-7 rounded-md bg-red-500 border-2 border-red-500"
+                  onClick={() => {
+                    setMarkerColors((m) => ({ ...m, [item.id]: 'red' }));
+                    setTimeout(() => openPopupRef.current?.(item, 'red'), 0);
+                  }}
+                />
+                <Button
+                  aria-label="paars"
+                  size="icon"
+                  variant="secondary"
+                  className="h-7 w-7 rounded-md bg-purple-500 border-2 border-purple-500"
+                  onClick={() => {
+                    setMarkerColors((m) => ({ ...m, [item.id]: 'purple' }));
+                    setTimeout(() => openPopupRef.current?.(item, 'purple'), 0);
+                  }}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </Card>
+    );
+    const overlay = new PopupOverlay(item.position, holder);
+    popupOverlayRef.current = overlay;
+    overlay.setMap(mapRef.current!);
   }
 
-  const handleRemoveTag = (toolName: string) => {
-    const tagRegex = new RegExp(`@${toolName}\\b`, 'g')
-    setPromptText(prev => prev.replace(tagRegex, '').replace(/\s+/g, ' ').trim())
+  useEffect(() => {
+    openPopupRef.current = (it, oc) => openPopup(it, oc);
+  }, [markerColors]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function init() {
+      try {
+        if (!apiKey) {
+          setError('Missing NEXT_PUBLIC_GOOGLE_MAPS_API_KEY');
+          return;
+        }
+        const loader = new Loader({
+          apiKey,
+          version: 'weekly',
+          libraries: ['marker'],
+        });
+        await loader.importLibrary('maps');
+        await loader.importLibrary('marker');
+        if (cancelled) return;
+        const options: google.maps.MapOptions = {
+          center: defaultCenter,
+          zoom: 9,
+          mapTypeId:
+            baseMap === 'satellite'
+              ? google.maps.MapTypeId.HYBRID
+              : google.maps.MapTypeId.ROADMAP,
+          tilt: use3D ? 67.5 : 0,
+          heading: use3D ? 45 : 0,
+          gestureHandling: 'greedy',
+          streetViewControl: false,
+          fullscreenControl: false,
+          mapTypeControl: false,
+        };
+        if (mapId) Object.assign(options, { mapId });
+        const map = new google.maps.Map(
+          mapContainerRef.current as HTMLDivElement,
+          options
+        );
+        mapRef.current = map;
+        directionsServiceRef.current = new google.maps.DirectionsService();
+        directionsRendererRef.current = new google.maps.DirectionsRenderer({
+          suppressMarkers: true,
+          preserveViewport: true,
+        });
+        directionsRendererRef.current.setMap(map);
+        infoWindowRef.current = new google.maps.InfoWindow();
+        setIsReady(true);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Failed to load Google Maps');
+      }
+    }
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [apiKey, defaultCenter, mapId]);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    mapRef.current.setMapTypeId(
+      baseMap === 'satellite'
+        ? google.maps.MapTypeId.HYBRID
+        : google.maps.MapTypeId.ROADMAP
+    );
+    if (baseMap === 'roadmap') {
+      const isDark = resolvedTheme === 'dark';
+      const styles = isDark ? darkMapStyles : null;
+      mapRef.current.setOptions({
+        styles: styles || undefined,
+        backgroundColor: isDark ? '#242f3e' : '#e5e3df',
+      });
+      try {
+        const div = mapRef.current.getDiv() as HTMLElement;
+        div.style.backgroundColor = isDark ? '#242f3e' : '#e5e3df';
+      } catch {}
+    } else {
+      mapRef.current.setOptions({
+        styles: undefined,
+        backgroundColor: undefined,
+      });
+      try {
+        const div = mapRef.current.getDiv() as HTMLElement;
+        div.style.backgroundColor = '';
+      } catch {}
+    }
+  }, [baseMap, isReady, resolvedTheme, darkMapStyles]);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    mapRef.current.setTilt(use3D ? 67.5 : 0);
+    mapRef.current.setHeading(use3D ? 45 : 0);
+  }, [use3D, isReady]);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    markersRef.current.forEach(detachMarker);
+    markersRef.current = [];
+    markerRootsRef.current.forEach((r) => {
+      try {
+        r.unmount();
+      } catch {}
+    });
+    markerRootsRef.current = [];
+    markerContainersRef.current = {};
+    if (!showMarkers || groups.length === 0) return;
+    function buildSquareIcon(
+      size = 28,
+      fill = '#ffffff',
+      stroke = '#e5e7eb',
+      radius = 6
+    ): google.maps.Icon {
+      const svg = `<?xml version='1.0'?>
+      <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
+        <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
+        size - 1
+      }' height='${size - 1}' fill='${fill}' stroke='${stroke}'/>
+      </svg>`;
+      const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+      return {
+        url,
+        size: new google.maps.Size(size, size),
+        scaledSize: new google.maps.Size(size, size),
+        anchor: new google.maps.Point(size / 2, size / 2),
+        labelOrigin: new google.maps.Point(size / 2, size / 2 + 1),
+      } as google.maps.Icon;
+    }
+    const info = infoWindowRef.current;
+    groups.forEach((item, idx) => {
+      if (mapId && google.maps.marker?.AdvancedMarkerElement) {
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        markerRootsRef.current.push(root);
+        root.render(
+          <Button
+            variant="secondary"
+            size="sm"
+            className={
+              'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+            }
+            title={item.name}
+            aria-label={`Locatie ${idx + 1}: ${item.name}`}
+          >
+            {String(idx + 1)}
+          </Button>
+        );
+        markerContainersRef.current[item.id] = container;
+        const adv = new google.maps.marker.AdvancedMarkerElement({
+          position: item.position,
+          map: mapRef.current!,
+          content: container,
+        });
+        adv.addListener('gmp-click', () => {
+          setSelectedMarkerIds((prev) => {
+            if (prev.includes(item.id))
+              return prev.filter((x) => x !== item.id);
+            if (prev.length < 2) return [...prev, item.id];
+            return [prev[1], item.id];
+          });
+          openPopupRef.current?.(item);
+        });
+        markersRef.current.push(adv);
+      } else if (google.maps.OverlayView) {
+        class DomMarker extends google.maps.OverlayView {
+          position: LatLng;
+          container: HTMLDivElement;
+          click: () => void;
+          constructor(
+            position: LatLng,
+            content: HTMLElement,
+            click: () => void
+          ) {
+            super();
+            this.position = position;
+            this.container = document.createElement('div');
+            this.container.style.position = 'absolute';
+            this.container.appendChild(content);
+            this.click = click;
+            this.container.addEventListener('click', this.click);
+          }
+          onAdd() {
+            const panes = this.getPanes();
+            if (!panes) return;
+            panes.overlayMouseTarget.appendChild(this.container);
+          }
+          draw() {
+            const projection = this.getProjection();
+            if (!projection) return;
+            const point = projection.fromLatLngToDivPixel(
+              new google.maps.LatLng(this.position)
+            );
+            if (!point) return;
+            this.container.style.left = `${point.x}px`;
+            this.container.style.top = `${point.y}px`;
+            this.container.style.transform = 'translate(-50%, -50%)';
+          }
+          onRemove() {
+            this.container.removeEventListener('click', this.click);
+            this.container.remove();
+          }
+        }
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        markerRootsRef.current.push(root);
+        root.render(
+          <Button
+            variant="secondary"
+            size="sm"
+            className={
+              'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+            }
+            title={item.name}
+            aria-label={`Locatie ${idx + 1}: ${item.name}`}
+          >
+            {String(idx + 1)}
+          </Button>
+        );
+        markerContainersRef.current[item.id] = container;
+        const domMarker = new DomMarker(item.position, container, () => {
+          setSelectedMarkerIds((prev) => {
+            if (prev.includes(item.id))
+              return prev.filter((x) => x !== item.id);
+            if (prev.length < 2) return [...prev, item.id];
+            return [prev[1], item.id];
+          });
+          openPopupRef.current?.(item);
+        });
+        domMarker.setMap(mapRef.current!);
+        markersRef.current.push(domMarker);
+      } else {
+        const marker = new google.maps.Marker({
+          position: item.position,
+          map: mapRef.current!,
+          icon: buildSquareIcon(),
+          label: {
+            text: String(idx + 1),
+            color: '#111827',
+            fontSize: '11px',
+            fontWeight: '600',
+          } as google.maps.MarkerLabel,
+        });
+        marker.addListener('click', () => {
+          setSelectedMarkerIds((prev) => {
+            if (prev.includes(item.id))
+              return prev.filter((x) => x !== item.id);
+            if (prev.length < 2) return [...prev, item.id];
+            return [prev[1], item.id];
+          });
+          openPopupRef.current?.(item);
+        });
+        markersRef.current.push(marker);
+      }
+    });
+  }, [showMarkers, isReady, groupsKey, mapId, baseMap]);
+
+  useEffect(() => {
+    Object.entries(markerContainersRef.current).forEach(([id, container]) => {
+      const btn = container.querySelector('button') as HTMLElement | null;
+      const el = btn ?? (container.firstElementChild as HTMLElement | null);
+      if (!el) return;
+      el.classList.add('border-2');
+      el.classList.remove(
+        'bg-card',
+        'bg-secondary',
+        'bg-orange-500',
+        'bg-blue-500',
+        'bg-red-500',
+        'bg-purple-500',
+        'text-white',
+        'text-secondary-foreground'
+      );
+      const color = markerColors[id];
+      if (color === 'orange') {
+        el.classList.add('bg-orange-500', 'text-white');
+      } else if (color === 'blue') {
+        el.classList.add('bg-blue-500', 'text-white');
+      } else if (color === 'red') {
+        el.classList.add('bg-red-500', 'text-white');
+      } else if (color === 'purple') {
+        el.classList.add('bg-purple-500', 'text-white');
+      } else {
+        el.classList.add('bg-secondary', 'text-secondary-foreground');
+      }
+      const c = markerColors[id];
+      const borderColor =
+        c === 'orange'
+          ? 'border-orange-500'
+          : c === 'blue'
+          ? 'border-blue-500'
+          : c === 'red'
+          ? 'border-red-500'
+          : c === 'purple'
+          ? 'border-purple-500'
+          : 'border-border';
+      el.classList.remove(
+        'border-orange-500',
+        'border-blue-500',
+        'border-red-500',
+        'border-purple-500',
+        'border-border'
+      );
+      if (selectedMarkerIds.includes(id)) {
+        el.classList.remove('border-transparent');
+        el.classList.add(borderColor);
+      } else {
+        el.classList.add('border-transparent');
+      }
+    });
+  }, [selectedMarkerIds, markerColors]);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    if (groups.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    groups.forEach((g) => bounds.extend(g.position));
+    mapRef.current.fitBounds(bounds, 48);
+  }, [groupsKey, isReady]);
+
+  useEffect(() => {
+    return () => {
+      closePopup();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    if (selectionPolylineRef.current) {
+      selectionPolylineRef.current.setMap(null);
+      selectionPolylineRef.current = null;
+    }
+    if (midOverlayRef.current) {
+      try {
+        midOverlayRef.current.setMap(null as unknown as google.maps.Map);
+      } catch {}
+      midOverlayRef.current = null;
+    }
+    if (midRootRef.current) {
+      try {
+        midRootRef.current.unmount();
+      } catch {}
+      midRootRef.current = null;
+    }
+    // keep existing walking route until selection changes; do not clear it here
+    if (selectedMarkerIds.length !== 2) return;
+    const a = groups.find((g) => g.id === selectedMarkerIds[0]);
+    const b = groups.find((g) => g.id === selectedMarkerIds[1]);
+    if (!a || !b) return;
+    if (!walkDuration) {
+      selectionPolylineRef.current = new google.maps.Polyline({
+        map: mapRef.current,
+        path: [a.position, b.position],
+        strokeOpacity: 0,
+        icons: [
+          {
+            icon: {
+              path: 'M 0,-1 0,1',
+              strokeOpacity: 1,
+              scale: 4,
+            },
+            offset: '0',
+            repeat: '16px',
+          },
+        ],
+        strokeColor: '#9CA3AF',
+      });
+    }
+    class MidOverlay extends google.maps.OverlayView {
+      p: LatLng;
+      el: HTMLDivElement;
+      constructor(p: LatLng, content: HTMLElement) {
+        super();
+        this.p = p;
+        this.el = document.createElement('div');
+        this.el.style.position = 'absolute';
+        this.el.appendChild(content);
+      }
+      onAdd() {
+        this.getPanes()?.overlayMouseTarget.appendChild(this.el);
+      }
+      draw() {
+        const proj = this.getProjection();
+        if (!proj) return;
+        const pt = proj.fromLatLngToDivPixel(new google.maps.LatLng(this.p));
+        if (!pt) return;
+        this.el.style.left = `${pt.x}px`;
+        this.el.style.top = `${pt.y}px`;
+        this.el.style.transform = 'translate(-50%, -50%)';
+      }
+      onRemove() {
+        this.el.remove();
+      }
+    }
+    const mid = routeMidpoint ?? {
+      lat: (a.position.lat + b.position.lat) / 2,
+      lng: (a.position.lng + b.position.lng) / 2,
+    };
+    const holder = document.createElement('div');
+    const root = createRoot(holder);
+    midRootRef.current = root;
+    const primaryColor = markerColors[selectedMarkerIds[0]];
+    const durationClasses =
+      primaryColor === 'orange'
+        ? 'bg-orange-500 text-white border-orange-500'
+        : primaryColor === 'blue'
+        ? 'bg-blue-500 text-white border-blue-500'
+        : primaryColor === 'red'
+        ? 'bg-red-500 text-white border-red-500'
+        : primaryColor === 'purple'
+        ? 'bg-purple-500 text-white border-purple-500'
+        : 'bg-secondary text-secondary-foreground border-border';
+    const calcBtnClasses =
+      primaryColor === 'orange'
+        ? 'bg-orange-500 text-white border-orange-500'
+        : primaryColor === 'blue'
+        ? 'bg-blue-500 text-white border-blue-500'
+        : primaryColor === 'red'
+        ? 'bg-red-500 text-white border-red-500'
+        : primaryColor === 'purple'
+        ? 'bg-purple-500 text-white border-purple-500'
+        : 'bg-secondary text-secondary-foreground border-border';
+    const calcBtnHoverBg =
+      primaryColor === 'orange'
+        ? 'hover:bg-orange-500'
+        : primaryColor === 'blue'
+        ? 'hover:bg-blue-500'
+        : primaryColor === 'red'
+        ? 'hover:bg-red-500'
+        : primaryColor === 'purple'
+        ? 'hover:bg-purple-500'
+        : 'hover:bg-secondary';
+    root.render(
+      <div className="flex items-center gap-2">
+        {!walkDuration ? (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="icon"
+                  className={`h-8 w-8 rounded-lg border-2 focus:bg-inherit active:bg-inherit hover:opacity-100 focus:opacity-100 active:opacity-100 transition-none ${calcBtnClasses} ${calcBtnHoverBg}`}
+                  onClick={() =>
+                    computeWalkingRouteBetween(a.position, b.position)
+                  }
+                >
+                  <Route className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Bereken looproute</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        ) : null}
+        {walkDuration ? (
+          <div
+            className={`px-2 py-1 rounded-md border text-xs shadow-sm ${durationClasses}`}
+          >
+            {walkDuration}
+          </div>
+        ) : null}
+      </div>
+    );
+    const overlay = new MidOverlay(mid, holder);
+    midOverlayRef.current = overlay;
+    overlay.setMap(mapRef.current);
+  }, [
+    selectedMarkerIds,
+    isReady,
+    groupsKey,
+    walkDuration,
+    routeMidpoint,
+    markerColors,
+    baseMap,
+    use3D,
+  ]);
+
+  useEffect(() => {
+    if (!directionsRendererRef.current) return;
+    directionsRendererRef.current.setMap(null as unknown as google.maps.Map);
+    setWalkDuration(null);
+    setRouteMidpoint(null);
+  }, [selectedMarkerIds]);
+
+  async function computeWalkingRouteBetween(p1: LatLng, p2: LatLng) {
+    if (
+      !isReady ||
+      !directionsServiceRef.current ||
+      !directionsRendererRef.current
+    )
+      return;
+    try {
+      const result = await directionsServiceRef.current.route({
+        origin: p1,
+        destination: p2,
+        travelMode: google.maps.TravelMode.WALKING,
+        provideRouteAlternatives: false,
+      });
+      directionsRendererRef.current.setMap(mapRef.current);
+      directionsRendererRef.current.setDirections(result);
+      const leg = result.routes?.[0]?.legs?.[0];
+      const text = leg?.duration?.text || null;
+      setWalkDuration(text);
+      let mp: LatLng | null = null;
+      const r: any = result.routes?.[0];
+      if (
+        r?.overview_path &&
+        Array.isArray(r.overview_path) &&
+        r.overview_path.length
+      ) {
+        const i = Math.floor(r.overview_path.length / 2);
+        const ll = r.overview_path[i];
+        if (ll && typeof ll.lat === 'function' && typeof ll.lng === 'function')
+          mp = { lat: ll.lat(), lng: ll.lng() };
+      } else if (r?.legs && r.legs[0]?.steps) {
+        const pts: any[] = [];
+        r.legs[0].steps.forEach((s: any) => {
+          if (s?.path && Array.isArray(s.path)) pts.push(...s.path);
+        });
+        if (pts.length) {
+          const i = Math.floor(pts.length / 2);
+          const ll = pts[i];
+          if (
+            ll &&
+            typeof ll.lat === 'function' &&
+            typeof ll.lng === 'function'
+          )
+            mp = { lat: ll.lat(), lng: ll.lng() };
+        }
+      }
+      if (mp) setRouteMidpoint(mp);
+    } catch {
+      setError('Directions API not enabled for walking routes.');
+    }
   }
+
+  function recenter() {
+    if (!mapRef.current) return;
+    mapRef.current.setCenter(defaultCenter);
+    mapRef.current.setZoom(9);
+  }
+
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        {/* Sidebar */}
-        <Sidebar variant="floating" collapsible="icon">
-          <SidebarHeader>
-            {/* Logo/Brand */}
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-                  <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <Server className="size-4" />
-                  </div>
-                  <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">MCP Generator</span>
-                    <span className="truncate text-xs">Server Builder</span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarHeader>
-
-          <SidebarContent>
-            {/* Navigation */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Platform</SidebarGroupLabel>
-              <SidebarMenu>
-                {sidebarData.navMain.map((item) => (
-                  <Collapsible
-                    key={item.title}
-                    asChild
-                    defaultOpen={item.isActive}
-                    className="group/collapsible"
-                  >
-                    <SidebarMenuItem>
-                      <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title}>
-                          {item.icon && <item.icon />}
-                          <span>{item.title}</span>
-                          <ChevronRight className="ml-auto transition-transform duration-300 group-data-[state=open]/collapsible:rotate-90" />
-                        </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <SidebarMenuSub>
-                          {item.items?.map((subItem) => (
-                            <SidebarMenuSubItem key={subItem.title}>
-                              <SidebarMenuSubButton asChild>
-                                <a href={subItem.url}>
-                                  <span>{subItem.title}</span>
-                                </a>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                          ))}
-                        </SidebarMenuSub>
-                      </CollapsibleContent>
-                    </SidebarMenuItem>
-                  </Collapsible>
-                ))}
-              </SidebarMenu>
-            </SidebarGroup>
-
-            {/* Projects */}
-            <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-              <SidebarGroupLabel>Recent Projects</SidebarGroupLabel>
-              <SidebarMenu>
-                {sidebarData.projects.map((item) => (
-                  <SidebarMenuItem key={item.name}>
-                    <SidebarMenuButton asChild>
-                      <a href={item.url}>
-                        <item.icon />
-                        <span>{item.name}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-                <SidebarMenuItem>
-                  <SidebarMenuButton className="text-sidebar-foreground/70">
-                    <Plus className="text-sidebar-foreground/70" />
-                    <span>New Project</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroup>
-          </SidebarContent>          <SidebarFooter>
-            {/* User Menu */}
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <SidebarMenuButton
-                      size="lg"
-                      className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                    >
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src={sidebarData.user.avatar} alt={sidebarData.user.name} />
-                        <AvatarFallback className="rounded-lg">
-                          {isSignedIn && user
-                            ? (user.firstName?.[0] || user.fullName?.[0] || "U").toUpperCase()
-                            : "G"
-                          }
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">{sidebarData.user.name}</span>
-                        <span className="truncate text-xs">{sidebarData.user.email}</span>
-                      </div>
-                    </SidebarMenuButton>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                    side={isMobile ? "bottom" : "right"}
-                    align="end"
-                    sideOffset={4}
-                  >
-                    <DropdownMenuLabel className="p-0 font-normal">
-                      <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                        <Avatar className="h-8 w-8 rounded-lg">
-                          <AvatarImage src={sidebarData.user.avatar} alt={sidebarData.user.name} />
-                          <AvatarFallback className="rounded-lg">
-                            {isSignedIn && user
-                              ? (user.firstName?.[0] || user.fullName?.[0] || "U").toUpperCase()
-                              : "G"
-                            }
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="grid flex-1 text-left text-sm leading-tight">
-                          <span className="truncate font-semibold">{sidebarData.user.name}</span>
-                          <span className="truncate text-xs">{sidebarData.user.email}</span>
-                        </div>
-                      </div>
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {isSignedIn ? (
-                      <>
-                        <DropdownMenuGroup>
-                          <DropdownMenuItem>
-                            <Users />
-                            Account
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Key />
-                            API Settings
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Bell />
-                            Notifications
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <CreditCard />
-                            Billing
-                          </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                          <LogOut />
-                          Log out
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <DropdownMenuGroup>
-                        <DropdownMenuItem>
-                          <Users />
-                          Sign In
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Sparkles />
-                          Sign Up
-                        </DropdownMenuItem>
-                      </DropdownMenuGroup>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarFooter>
-          <SidebarRail />
-        </Sidebar>        {/* Main Content */}
-        <SidebarInset>
-          <TooltipProvider>
-            <div className="min-h-screen bg-background">              <div className="hidden min-h-screen flex-col md:flex">
-              {/* Navbar with matching card styling */}
-              <PlaygroundNavbar presets={presets} />
-
-              {/* Main content with card-based layout matching navbar style */}
-              <div className="flex-1 px-4 sm:px-6 lg:px-8 py-6">
-                <div className="w-full space-y-6">
-
-                  {/* Hero Section
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="bg-card border rounded-2xl shadow-sm p-8"
-            >
-              <div className="text-center space-y-4">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-                  className="flex items-center justify-center space-x-2"
-                >
-                  <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-xl">
-                    <Zap className="w-6 h-6 text-primary-foreground" />
-                  </div>
-                  <h1 className="text-3xl font-bold tracking-tight">MCP Server Generator</h1>
-                </motion.div>
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-lg text-muted-foreground max-w-2xl mx-auto"
-                >
-                  Transform your ideas into powerful MCP servers. Generate from prompts, convert websites,
-                  and deploy with beautiful animations and seamless workflows.
-                </motion.p>
+      <div className="min-h-screen w-full flex flex-col">
+        <PlaygroundNavbar presets={presets} />
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4">
+          <div className="relative h-[calc(100vh-140px)] w-full rounded-2xl overflow-hidden border bg-background">
+            <div
+              ref={mapContainerRef}
+              className="absolute inset-0"
+            />
+            {!apiKey && (
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <Card className="max-w-md w-full">
+                  <CardHeader>
+                    <CardTitle>Google Maps setup required</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY and optionally
+                      NEXT_PUBLIC_GOOGLE_MAP_ID in .env.local and restart the
+                      server.
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-            </motion.div> */}
+            )}
+            {error && apiKey && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+                <Card>
+                  <CardContent className="py-2 px-4 text-sm">
+                    {error}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            <div className="absolute bottom-4 left-4 z-20 max-w-[95vw] pointer-events-auto">
+              <TooltipProvider>
+                <div className="bg-card border rounded-xl shadow-sm p-1.5 flex flex-wrap items-center gap-1.5">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg border-2 ${
+                      baseMap === 'roadmap'
+                        ? 'border-border'
+                        : 'border-transparent'
+                    }`}
+                    onClick={() => setBaseMap('roadmap')}
+                  >
+                    <Layers className="w-3.5 h-3.5 mr-1.5" />
+                    Roadmap
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg border-2 ${
+                      baseMap === 'satellite'
+                        ? 'border-border'
+                        : 'border-transparent'
+                    }`}
+                    onClick={() => setBaseMap('satellite')}
+                  >
+                    <Satellite className="w-3.5 h-3.5 mr-1.5" />
+                    Satellite
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg border-2 ${
+                      use3D ? 'border-border' : 'border-transparent'
+                    }`}
+                    onClick={() => setUse3D((v) => !v)}
+                  >
+                    3D
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg border-2 ${
+                      showMarkers ? 'border-border' : 'border-transparent'
+                    }`}
+                    onClick={() => setShowMarkers((v) => !v)}
+                  >
+                    <MapPin className="w-3.5 h-3.5 mr-1.5" />
+                    Markers
+                  </Button>
 
-                  {/* Main Generator Section */}
-                  <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-
-                    {/* Left Column - Generator */}
-                    <div className="space-y-6">
-
-                      {/* Prompt Input Card */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.6 }}
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg border-2 ${
+                      useArchiveData ? 'border-border' : 'border-transparent'
+                    }`}
+                    onClick={() => setUseArchiveData((v) => !v)}
+                  >
+                    Archief
+                  </Button>
+                  <div className="h-6 w-px bg-border mx-1" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={recenter}
                       >
-                        <Card className="border rounded-2xl shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                              </div>
-                              <CardTitle className="text-lg">Create Your MCP Server</CardTitle>
-                            </div>                        <CardDescription>
-                              Describe what your MCP server should do, and we&apos;ll generate it for you.
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-6">                      <div className="space-y-2">
-                            <Label htmlFor="prompt" className="text-sm font-medium">
-                              Server Description
-                            </Label>
-                            <div className="relative">
-                              <Textarea
-                                id="prompt"
-                                value={promptText}
-                                onChange={handleTextareaChange}
-                                onKeyDown={(e) => {
-                                  if (showAutocomplete && (e.key === 'Escape')) {
-                                    setShowAutocomplete(false)
-                                    e.preventDefault()
-                                  }
-                                }}
-                                placeholder="e.g., Create an MCP server that can fetch weather data from OpenWeatherMap API and provide current conditions and forecasts for any city... (Type @ to tag tools)"
-                                className="min-h-[120px] resize-none text-base pr-2"
-                                spellCheck={true}
-                              />                          {/* Autocomplete dropdown */}
-                              {showAutocomplete && (
-                                <motion.div
-                                  ref={autocompleteRef}
-                                  initial={{ opacity: 0, y: -10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: -10 }}
-                                  className="fixed bg-card border rounded-2xl shadow-lg p-3 z-50 min-w-[220px]"
-                                  style={{
-                                    top: autocompletePosition.top,
-                                    left: autocompletePosition.left
-                                  }}
-                                >
-                                  <div className="text-xs text-muted-foreground mb-3 px-1 font-medium">Select a tool:</div>
-                                  <div className="space-y-1">
-                                    {availableTools.map((tool) => {
-                                      const Icon = tool.icon
-                                      return (
-                                        <div
-                                          key={tool.name}
-                                          className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg cursor-pointer transition-colors group"
-                                          onClick={() => insertToolTag(tool.name)}
-                                        >
-                                          <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                            <Icon className="w-4 h-4 text-primary" />
-                                          </div>
-                                          <div className="flex-1">
-                                            <div className="text-sm font-medium text-foreground">{tool.name}</div>
-                                            <div className="text-xs text-muted-foreground">{tool.description}</div>
-                                          </div>
-                                        </div>
-                                      )
-                                    })}
-                                  </div>
-                                </motion.div>
-                              )}{/* Show badges for existing tags */}
-                              {promptText.match(/@(\w+)/g) && (
-                                <div className="mt-2 flex flex-wrap gap-1">
-                                  <span className="text-xs text-muted-foreground mr-2">Tagged tools:</span>
-                                  {promptText.match(/@(\w+)/g)?.map((match, index) => {
-                                    const toolName = match.replace(/@(\w+)/, '$1')
-                                    const tool = availableTools.find(t => t.name === toolName)
-                                    const Icon = tool?.icon || Code
-                                    return (
-                                      <motion.div
-                                        key={`${toolName}-${index}`}
-                                        initial={{ opacity: 0, scale: 0.8 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.8 }}
-                                      >
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Badge
-                                              variant="secondary"
-                                              className="text-xs bg-primary/10 text-primary border-primary/20 flex items-center gap-1 cursor-pointer hover:bg-primary/20 transition-colors group"
-                                              onClick={() => handleRemoveTag(toolName)}
-                                            >
-                                              <Icon className="w-3 h-3" />
-                                              {toolName}
-                                              <X className="w-2.5 h-2.5 ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </Badge>
-                                          </TooltipTrigger>
-                                          <TooltipContent side="top" className="max-w-xs">
-                                            <div className="space-y-1">
-                                              <div className="font-medium flex items-center gap-1">
-                                                <Icon className="w-3 h-3" />
-                                                {toolName}
-                                              </div>
-                                              <div className="text-xs text-muted-foreground">
-                                                {tool?.description || 'Custom tool'}
-                                              </div>
-                                              <div className="text-xs text-muted-foreground border-t pt-1">
-                                                Click to remove from prompt
-                                              </div>
-                                            </div>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </motion.div>
-                                    )
-                                  })}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                            {/* Website URLs Section */}
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium flex items-center space-x-2">
-                                  <Globe className="w-4 h-4" />
-                                  <span>Website Sources (Optional)</span>
-                                </Label>
-                                <Button variant="outline" size="sm" className="h-8 px-3" onClick={addUrl}>
-                                  <Plus className="w-3 h-3 mr-1" />
-                                  Add URL
-                                </Button>
-                              </div>
-
-                              {/* URL Inputs */}
-                              <div className="space-y-3">
-                                <AnimatePresence>
-                                  {urls.map((url, index) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      className="flex items-center space-x-2 group"
-                                    >
-                                      <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                        <Link className="w-3 h-3 text-muted-foreground" />
-                                      </div>
-                                      <Input
-                                        placeholder={index === 0 ? "https://api.example.com/docs" : "https://example.com/integration-guide"}
-                                        className="flex-1"
-                                        value={url}
-                                        onChange={(e) => updateUrl(index, e.target.value)}
-                                      />
-                                      {urls.length > 1 && (
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                          onClick={() => removeUrl(index)}
-                                        >
-                                          <X className="w-3 h-3" />
-                                        </Button>
-                                      )}
-                                    </motion.div>
-                                  ))}
-                                </AnimatePresence>
-                              </div>
-
-                              <p className="text-xs text-muted-foreground">
-                                Add documentation URLs or API references to enhance your MCP server generation.
-                              </p>
-                            </div>                      {/* Generation Options */}
-                            <div className="space-y-4">
-                              <Label className="text-sm font-medium">Generation Options</Label>
-                              <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                                  <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">Include Tests</Label>
-                                    <p className="text-xs text-muted-foreground">Generate unit tests</p>
-                                  </div>
-                                  <Switch
-                                    checked={includeTests}
-                                    onCheckedChange={setIncludeTests}
-                                    leftIcon={<X className="w-3 h-3" />}
-                                    rightIcon={<Code className="w-3 h-3" />}
-                                  />
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-lg border bg-card/50">
-                                  <div className="space-y-0.5">
-                                    <Label className="text-sm font-medium">Error Handling</Label>
-                                    <p className="text-xs text-muted-foreground">Robust error management</p>
-                                  </div>
-                                  <Switch
-                                    checked={errorHandling}
-                                    onCheckedChange={setErrorHandling}
-                                    leftIcon={<X className="w-3 h-3" />}
-                                    rightIcon={<Zap className="w-3 h-3" />}
-                                  />
-                                </div>
-                              </div>
-                            </div>                      {/* Action Buttons Row */}
-                            <div className="flex gap-3">
-                              <div className="flex-1">
-                                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                  <Button
-                                    size="lg"
-                                    className="w-full"
-                                    onClick={handleGenerate}
-                                    disabled={isGenerating}
-                                  >
-                                    {isGenerating ? (
-                                      <>
-                                        <motion.div
-                                          animate={{ rotate: 360 }}
-                                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                          className="w-4 h-4 mr-2"
-                                        >
-                                          <Clock className="w-4 h-4" />
-                                        </motion.div>
-                                        Generating...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Rocket className="w-4 h-4 mr-2" />
-                                        Generate
-                                      </>
-                                    )}
-                                  </Button>
-                                </motion.div>
-                              </div>
-                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button variant="outline" size="lg" className="px-4">
-                                  <Code className="w-4 h-4 mr-2" />
-                                  Preview
-                                </Button>
-                              </motion.div>
-                              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button variant="outline" size="lg" className="px-4">
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Save
-                                </Button>
-                              </motion.div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-
-                      {/* Generated Code Preview */}
-                      <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.8 }}
+                        <LocateFixed className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Center NL</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="h-8 w-8 rounded-lg"
+                        onClick={() =>
+                          mapRef.current?.setHeading(
+                            (mapRef.current.getHeading() || 0) + 30
+                          )
+                        }
                       >
-                        <Card className="border rounded-2xl shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                                  <Code className="w-4 h-4 text-primary" />
-                                </div>
-                                <CardTitle className="text-lg">Generated Server</CardTitle>
-                              </div>
-                              <AnimatePresence>
-                                {!isGenerating && (
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0 }}
-                                  >
-                                    <Badge variant="secondary" className="text-xs">
-                                      Ready to Deploy
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          </CardHeader>                    <CardContent>
-                            <div className="rounded-lg border bg-muted/30 p-4 min-h-[200px]">
-                              <AnimatePresence mode="wait">
-                                {isGenerating ? (
-                                  <motion.div
-                                    key="generating"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="text-center space-y-2"
-                                  >
-                                    <motion.div
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                                    >
-                                      <Server className="w-8 h-8 text-primary mx-auto" />
-                                    </motion.div>
-                                    <p className="text-sm text-muted-foreground">
-                                      Generating your MCP server...
-                                    </p>
-                                  </motion.div>) : isGenerated ? (
-                                    <motion.div
-                                      key="generated"
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      exit={{ opacity: 0 }}
-                                      className="space-y-4"
-                                    >                                        <div className="flex items-center justify-between">
-                                        <div className="flex items-center space-x-2">
-                                          <CheckCircle className="w-4 h-4 text-muted-foreground" />
-                                          <h4 className="text-sm font-medium text-foreground">Generated Tools</h4>
-                                        </div>
-                                        <span className="text-xs text-muted-foreground">3 tools</span>
-                                      </div>
-
-                                      {/* Tool Cards */}
-                                      <div className="space-y-3">                                <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.1 }}
-                                        className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <div className="flex items-center space-x-3">                                              <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
-                                            <Globe className="w-4 h-4 text-muted-foreground" />
-                                          </div>
-                                            <div>
-                                              <h5 className="text-sm font-medium">get_weather</h5>
-                                              <p className="text-xs text-muted-foreground">Get current weather conditions</p>
-                                            </div>
-                                          </div>
-                                          <div className="flex items-center space-x-2">                                              <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-7 px-2"
-                                            onClick={() => handleToolTag('get_weather')}
-                                          >
-                                            <Edit className="w-3 h-3" />
-                                          </Button>
-                                            <span className="text-xs text-muted-foreground">Tool</span>
-                                          </div>
-                                        </div>
-                                        <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                          <span>• city: string</span>
-                                          <span>• Returns: object</span>
-                                        </div>
-                                      </motion.div>                                <motion.div
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: 0.2 }}
-                                        className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                      >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">                                                <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
-                                              <Zap className="w-4 h-4 text-muted-foreground" />
-                                            </div>
-                                              <div>
-                                                <h5 className="text-sm font-medium">get_forecast</h5>
-                                                <p className="text-xs text-muted-foreground">Get 5-day weather forecast</p>
-                                              </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2">                                                <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-7 px-2"
-                                              onClick={() => handleToolTag('get_forecast')}
-                                            >
-                                              <Edit className="w-3 h-3" />
-                                            </Button>
-                                              <span className="text-xs text-muted-foreground">Tool</span>
-                                            </div>
-                                          </div>
-                                          <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                            <span>• city: string</span>
-                                            <span>• days: number</span>
-                                          </div>
-                                        </motion.div>                                <motion.div
-                                          initial={{ opacity: 0, y: 10 }}
-                                          animate={{ opacity: 1, y: 0 }}
-                                          transition={{ delay: 0.3 }}
-                                          className="border rounded-lg p-3 bg-background/50 hover:bg-background/80 transition-colors"
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-3">                                                <div className="w-8 h-8 bg-muted/20 rounded-lg flex items-center justify-center">
-                                              <Server className="w-4 h-4 text-muted-foreground" />
-                                            </div>
-                                              <div>
-                                                <h5 className="text-sm font-medium">list_locations</h5>
-                                                <p className="text-xs text-muted-foreground">Search for weather locations</p>
-                                              </div>
-                                            </div>
-                                            <div className="flex items-center space-x-2">                                                <Button
-                                              variant="ghost"
-                                              size="sm"
-                                              className="h-7 px-2"
-                                              onClick={() => handleToolTag('list_locations')}
-                                            >
-                                              <Edit className="w-3 h-3" />
-                                            </Button>
-                                              <span className="text-xs text-muted-foreground">Tool</span>
-                                            </div>
-                                          </div>
-                                          <div className="mt-2 flex items-center space-x-4 text-xs text-muted-foreground">
-                                            <span>• query: string</span>
-                                            <span>• Returns: array</span>
-                                          </div>
-                                        </motion.div>
-                                      </div>
-
-                                      {includeTests && (
-                                        <motion.div
-                                          initial={{ opacity: 0, y: 10 }}
-                                          animate={{ opacity: 1, y: 0 }}
-                                          transition={{ delay: 0.4 }}
-                                          className="pt-3 border-t"
-                                        >
-                                          <div className="flex items-center space-x-2 mb-2">
-                                            <Code className="w-3 h-3 text-muted-foreground" />
-                                            <h5 className="text-xs font-medium text-muted-foreground">Test Coverage</h5>
-                                          </div>                                            <div className="grid grid-cols-3 gap-2 text-xs">
-                                            <div className="text-center p-2 bg-muted/20 rounded">
-                                              <div className="font-medium text-foreground">95%</div>
-                                              <div className="text-muted-foreground">Coverage</div>
-                                            </div>
-                                            <div className="text-center p-2 bg-muted/20 rounded">
-                                              <div className="font-medium text-foreground">12</div>
-                                              <div className="text-muted-foreground">Tests</div>
-                                            </div>
-                                            <div className="text-center p-2 bg-muted/20 rounded">
-                                              <div className="font-medium text-foreground">0</div>
-                                              <div className="text-muted-foreground">Failures</div>
-                                            </div>
-                                          </div>
-                                        </motion.div>
-                                      )}
-
-                                      <div className="pt-2">
-                                        <p className="text-xs text-muted-foreground text-center">
-                                          Use the <Code className="w-3 h-3 inline mx-1" /> Code Viewer in the navbar to see the implementation
-                                        </p>
-                                      </div>
-                                    </motion.div>
-                                  ) : (
-                                  <motion.div
-                                    key="empty"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="flex items-center justify-center h-full"
-                                  >
-                                    <div className="text-center space-y-2">
-                                      <Server className="w-8 h-8 text-muted-foreground mx-auto" />
-                                      <p className="text-sm text-muted-foreground">
-                                        Your generated MCP server code will appear here
-                                      </p>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    </div>
-
-                    {/* Right Column - Actions & Info */}
-                    <div className="space-y-6">                  {/* Quick Actions */}
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.7 }}
-                      >
-                        <Card className="border rounded-2xl shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center space-x-2">
-                              <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                                <Zap className="w-4 h-4 text-primary" />
-                              </div>
-                              <div>
-                                <CardTitle className="text-lg">Quick Actions</CardTitle>
-                                <CardDescription className="text-sm">
-                                  Deploy, install, or share your MCP server
-                                </CardDescription>
-                              </div>
-                            </div>
-                          </CardHeader>                      <CardContent>
-                            <div className="grid grid-cols-2 gap-3">
-                              <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group"
-                              >                                  <Button
-                                variant="outline"
-                                className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
-                                onClick={() => {/* Install locally functionality */ }}
-                              >
-                                  <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
-                                    <Download className="w-4 h-4" />
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-sm font-medium">Install</div>
-                                    <div className="text-xs text-muted-foreground">Local setup</div>
-                                  </div>
-                                </Button>
-                              </motion.div>
-                              <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group"
-                              >                                  <Button
-                                variant="outline"
-                                className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
-                                onClick={() => {/* Deploy to cloud functionality */ }}
-                              >
-                                  <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
-                                    <Globe className="w-4 h-4" />
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-sm font-medium">Deploy</div>
-                                    <div className="text-xs text-muted-foreground">To cloud</div>
-                                  </div>
-                                </Button>
-                              </motion.div>                          <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group col-span-2"
-                              >                                  <Popover open={showApiKeyPopover} onOpenChange={setShowApiKeyPopover}>
-                                  <PopoverTrigger asChild>
-                                    <Button
-                                      variant="outline"
-                                      className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
-                                    >
-                                      <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
-                                        <Key className="w-4 h-4" />
-                                      </div>
-                                      <div className="text-center">
-                                        <div className="text-sm font-medium">API Key Management</div>
-                                        <div className="text-xs text-muted-foreground">Create and manage keys</div>
-                                      </div>
-                                    </Button>
-                                  </PopoverTrigger>
-                                  <PopoverContent className="w-80 p-4" align="center">
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <h4 className="font-medium leading-none flex items-center gap-2">
-                                          <Key className="w-4 h-4" />
-                                          API Key Management
-                                        </h4>
-                                        <p className="text-sm text-muted-foreground">
-                                          Create and manage your API keys
-                                        </p>
-                                      </div>
-
-                                      {/* Create New Key */}
-                                      <div className="space-y-3 border-t pt-3">
-                                        <div className="space-y-2">
-                                          <Label htmlFor="new-api-key-name" className="text-sm">Key Name</Label>
-                                          <Input
-                                            id="new-api-key-name"
-                                            placeholder="Enter key name"
-                                            value={newApiKeyName}
-                                            onChange={(e) => setNewApiKeyName(e.target.value)}
-                                            className="h-8"
-                                          />
-                                        </div>
-                                        <Button onClick={generateApiKey} className="w-full h-8">
-                                          <Plus className="w-3 h-3 mr-2" />
-                                          Generate Key
-                                        </Button>
-                                      </div>
-
-                                      {/* API Keys List */}
-                                      {apiKeys.length > 0 && (
-                                        <div className="space-y-3 border-t pt-3">
-                                          <div className="flex items-center justify-between">
-                                            <span className="text-sm font-medium">API Keys ({apiKeys.length})</span>
-                                          </div>
-                                          <div className="space-y-2 max-h-60 overflow-y-auto">
-                                            <AnimatePresence mode="popLayout">
-                                              {apiKeys.map((key) => (
-                                                <motion.div
-                                                  key={key.id}
-                                                  initial={{ opacity: 0, y: 10 }}
-                                                  animate={{ opacity: 1, y: 0 }}
-                                                  exit={{ opacity: 0, y: -10 }}
-                                                  transition={{ duration: 0.2 }}
-                                                  className="border rounded-lg p-3 space-y-2 bg-muted/30"
-                                                >
-                                                  <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-medium">{key.name}</span>
-                                                    <div className="flex gap-1">
-                                                      <motion.div
-                                                        whileHover={{ scale: 1.1 }}
-                                                        whileTap={{ scale: 0.9 }}
-                                                      >
-                                                        <Button
-                                                          size="sm"
-                                                          variant="outline"
-                                                          onClick={() => toggleKeyVisibility(key.id)}
-                                                          className="h-6 w-6 p-0"
-                                                        >
-                                                          {visibleKeys.has(key.id) ? (
-                                                            <EyeOff className="w-3 h-3" />
-                                                          ) : (
-                                                            <Eye className="w-3 h-3" />
-                                                          )}
-                                                        </Button>
-                                                      </motion.div>
-                                                      <motion.div
-                                                        whileHover={{ scale: 1.1 }}
-                                                        whileTap={{ scale: 0.9 }}
-                                                      >
-                                                        <CopyButton
-                                                          content={key.key}
-                                                          variant="outline"
-                                                          size="sm"
-                                                          className="h-6 w-6 p-0"
-                                                        />
-                                                      </motion.div>
-                                                      <motion.div
-                                                        whileHover={{ scale: 1.1 }}
-                                                        whileTap={{ scale: 0.9 }}
-                                                      >
-                                                        <Button
-                                                          size="sm"
-                                                          variant="outline"
-                                                          onClick={() => deleteApiKey(key.id)}
-                                                          className="h-6 w-6 p-0 text-destructive hover:text-destructive"
-                                                        >
-                                                          <Trash2 className="w-3 h-3" />
-                                                        </Button>
-                                                      </motion.div>
-                                                    </div>
-                                                  </div>
-                                                  <div className="text-xs text-muted-foreground">
-                                                    Created {key.createdAt.toLocaleDateString()}
-                                                  </div>                                              <div className="font-mono text-xs bg-background rounded p-2 break-all border">
-                                                    <AnimatePresence mode="wait">
-                                                      {visibleKeys.has(key.id) ? (
-                                                        <motion.span
-                                                          key="visible"
-                                                          initial={{ opacity: 0, scale: 0.9 }}
-                                                          animate={{ opacity: 1, scale: 1 }}
-                                                          exit={{ opacity: 0, scale: 0.9 }}
-                                                          transition={{ duration: 0.2 }}
-                                                        >
-                                                          {key.key}
-                                                        </motion.span>
-                                                      ) : (
-                                                        <motion.span
-                                                          key="hidden"
-                                                          initial={{ opacity: 0, scale: 0.9 }}
-                                                          animate={{ opacity: 1, scale: 1 }}
-                                                          exit={{ opacity: 0, scale: 0.9 }}
-                                                          transition={{ duration: 0.2 }}
-                                                        >
-                                                          {'•'.repeat(key.key.length)}
-                                                        </motion.span>
-                                                      )}
-                                                    </AnimatePresence>
-                                                  </div>
-                                                </motion.div>
-                                              ))}
-                                            </AnimatePresence>
-                                          </div>
-                                        </div>
-                                      )}
-
-                                      {apiKeys.length === 0 && (
-                                        <div className="text-center py-4 text-muted-foreground border-t">
-                                          <Key className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                          <p className="text-sm">No API keys yet</p>
-                                          <p className="text-xs">Create your first key above</p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </PopoverContent>
-                                </Popover>
-                              </motion.div>                          <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="group col-span-2"
-                              >                                  <Button
-                                variant="outline"
-                                className="h-20 w-full flex-col gap-2 hover:bg-muted/50 transition-all duration-200"
-                                onClick={() => {/* Share with community functionality */ }}
-                              >
-                                  <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-lg group-hover:bg-muted/80 transition-colors">
-                                    <Share2 className="w-4 h-4" />
-                                  </div>
-                                  <div className="text-center">
-                                    <div className="text-sm font-medium">Share with Community</div>
-                                    <div className="text-xs text-muted-foreground">Publish to marketplace</div>
-                                  </div>
-                                </Button>
-                              </motion.div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>                  {/* Server Info */}
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.9 }}
-                      >
-                        <Card className="border rounded-2xl shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                                  <Server className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                  <CardTitle className="text-lg">Server Details</CardTitle>
-                                  <CardDescription className="text-sm">
-                                    Configuration and runtime information
-                                  </CardDescription>
-                                </div>
-                              </div>
-                              <AnimatePresence>
-                                {isGenerated && (
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0 }}
-                                  >                                      <Badge variant="secondary" className="text-xs">
-                                      <CheckCircle className="w-3 h-3 mr-1" />
-                                      Ready
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="space-y-4">
-                              {/* Status Row */}
-                              <motion.div
-                                className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
-                                whileHover={{ scale: 1.01 }}
-                              >
-                                <div className="flex items-center space-x-3">
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                    <Sparkles className="w-3 h-3 text-muted-foreground" />
-                                  </div>
-                                  <div>
-                                    <span className="text-sm font-medium">Status</span>
-                                    <p className="text-xs text-muted-foreground">Current generation state</p>
-                                  </div>
-                                </div>                                  <Badge
-                                  variant={isGenerating ? "default" : isGenerated ? "secondary" : "outline"}
-                                  className="text-xs"
-                                >
-                                  {isGenerating && (
-                                    <motion.div
-                                      animate={{ rotate: 360 }}
-                                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                      className="w-3 h-3 mr-1"
-                                    >
-                                      <Clock className="w-3 h-3" />
-                                    </motion.div>
-                                  )}
-                                  {isGenerated && <CheckCircle className="w-3 h-3 mr-1" />}
-                                  {isGenerating ? "Generating" : isGenerated ? "Generated" : "Not Generated"}
-                                </Badge>
-                              </motion.div>
-
-                              <Separator />
-
-                              {/* Runtime Row */}
-                              <motion.div
-                                className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
-                                whileHover={{ scale: 1.01 }}
-                              >                                  <div className="flex items-center space-x-3">
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                    <Code className="w-3 h-3" />
-                                  </div>
-                                  <div>
-                                    <span className="text-sm font-medium">Runtime</span>
-                                    <p className="text-xs text-muted-foreground">JavaScript execution environment</p>
-                                  </div>
-                                </div>
-                                <Badge variant="outline" className="text-xs font-mono">
-                                  Node.js
-                                </Badge>
-                              </motion.div>
-
-                              {/* Protocol Row */}
-                              <motion.div
-                                className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
-                                whileHover={{ scale: 1.01 }}
-                              >                                  <div className="flex items-center space-x-3">
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                    <Globe className="w-3 h-3" />
-                                  </div>
-                                  <div>
-                                    <span className="text-sm font-medium">Protocol</span>
-                                    <p className="text-xs text-muted-foreground">Communication protocol</p>
-                                  </div>
-                                </div>
-                                <Badge variant="outline" className="text-xs font-mono">
-                                  HTTP
-                                </Badge>
-                              </motion.div>
-
-                              {/* Version Row */}
-                              <motion.div
-                                className="flex items-center justify-between p-3 rounded-lg border bg-card/50 hover:bg-card/80 transition-colors"
-                                whileHover={{ scale: 1.01 }}
-                              >                                  <div className="flex items-center space-x-3">
-                                  <div className="flex items-center justify-center w-6 h-6 bg-muted rounded">
-                                    <Zap className="w-3 h-3" />
-                                  </div>
-                                  <div>
-                                    <span className="text-sm font-medium">Version</span>
-                                    <p className="text-xs text-muted-foreground">MCP protocol version</p>
-                                  </div>
-                                </div>
-                                <Badge variant="outline" className="text-xs font-mono">
-                                  1.0.0
-                                </Badge>
-                              </motion.div>
-                            </div>
-
-                            {/* Additional Info Section */}
-                            {isGenerated && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                transition={{ delay: 0.2 }}
-                                className="pt-4 border-t"
-                              >                                  <div className="flex items-center gap-2 mb-3">
-                                  <span className="text-xs font-medium text-muted-foreground">Performance</span>
-                                  <div className="w-2 h-2 rounded-full bg-muted"></div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div className="text-center p-2 rounded-lg bg-muted/50">
-                                    <div className="text-lg font-semibold">99.9%</div>
-                                    <div className="text-xs text-muted-foreground">Uptime</div>
-                                  </div>
-                                  <div className="text-center p-2 rounded-lg bg-muted/50">
-                                    <div className="text-lg font-semibold">&lt;50ms</div>
-                                    <div className="text-xs text-muted-foreground">Response</div>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      </motion.div>                {/* Local Testing Environment */}
-                      <motion.div
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 1.1 }}
-                      >
-                        <Card className="border rounded-2xl shadow-sm">
-                          <CardHeader className="pb-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <div className="flex items-center justify-center w-8 h-8 bg-primary/10 rounded-lg">
-                                  <Rocket className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                  <CardTitle className="text-lg">Local Testing</CardTitle>
-                                  <CardDescription className="text-sm">
-                                    Test and modify your MCP server live
-                                  </CardDescription>
-                                </div>
-                              </div>
-                              <AnimatePresence>
-                                {serverStarted && (
-                                  <motion.div
-                                    initial={{ opacity: 0, scale: 0 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0 }}
-                                  >                                      <Badge variant="secondary" className="text-xs">
-                                      <div className="w-2 h-2 rounded-full bg-foreground mr-1"></div>
-                                      Running
-                                    </Badge>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>                        {/* Start/Stop Server Button directly under header */}
-                            <div className="mt-4">
-                              {serverStarted ? (
-                                <motion.div
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="group"
-                                >
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleTestServer}
-                                    className="w-full h-16 justify-start gap-3 hover:bg-muted/50 transition-all duration-200"
-                                  >
-                                    <div className="flex items-center justify-center w-10 h-10 bg-muted/30 rounded-lg group-hover:bg-muted/50 transition-colors">
-                                      <X className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="font-medium text-foreground">Stop Server</div>
-                                      <div className="text-sm text-muted-foreground">Terminate local development instance</div>
-                                    </div>
-                                  </Button>
-                                </motion.div>
-                              ) : (
-                                <motion.div
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="group"
-                                >
-                                  <Button
-                                    variant="outline"
-                                    onClick={handleTestServer}
-                                    disabled={isTestingServer}
-                                    className="w-full h-16 justify-start gap-3 hover:bg-muted/50 transition-all duration-200"
-                                  >
-                                    <div className="flex items-center justify-center w-10 h-10 bg-muted/30 rounded-lg group-hover:bg-muted/50 transition-colors">
-                                      <Rocket className="w-4 h-4 text-muted-foreground" />
-                                    </div>
-                                    <div className="text-left">
-                                      <div className="font-medium text-foreground">
-                                        {isTestingServer ? "Starting Server..." : "Start Server"}
-                                      </div>
-                                      <div className="text-sm text-muted-foreground">
-                                        {isTestingServer ? "Initializing development environment" : "Launch local development server"}
-                                      </div>
-                                    </div>
-                                  </Button>
-                                </motion.div>
-                              )}
-                            </div>
-                          </CardHeader><CardContent className="space-y-4">
-                            {/* IDE Configuration */}
-                            {showIdeConfig && serverStarted && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-
-                              >
-                                <CodeTabs
-                                  codes={getIdeConfig()}
-                                  lang="json"
-                                  copyButton={true}
-                                  defaultValue="VS Code"
-                                />
-                              </motion.div>
-                            )}
-
-                            {/* Server Output */}
-                            {(testOutput || isTestingServer) && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: "auto" }}
-                                className="bg-muted/50 rounded-lg p-3"
-                              >
-                                <div className="flex items-center gap-2 mb-2">
-                                  <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-foreground" : "bg-muted-foreground animate-pulse"}`}></div>
-                                  <span className="text-xs font-medium text-muted-foreground">
-                                    {isTestingServer ? "Starting..." : serverStarted ? "Server Running" : "Server Output"}
-                                  </span>
-                                </div>
-                                <pre className="text-xs text-foreground whitespace-pre-wrap font-mono">
-                                  {testOutput}
-                                </pre>
-                              </motion.div>
-                            )}
-                            {/* Empty state when server is not started */}
-                            {!serverStarted && !isTestingServer && !testOutput && (
-                              <div className="flex flex-col items-center justify-center py-8 text-center">
-                                <div className="w-12 h-12 bg-muted/50 rounded-lg flex items-center justify-center mb-3">
-                                  <Rocket className="w-6 h-6 text-muted-foreground" />
-                                </div>
-                                <h3 className="text-sm font-medium text-foreground mb-1">Ready to Test</h3>
-                                <p className="text-xs text-muted-foreground max-w-xs">
-                                  Click &quot;Start Server&quot; above to generate IDE configuration and begin testing your tools locally.
-                                </p>
-                              </div>)}{/* Quick Actions */}
-                            <div className="pt-4 border-t">
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="flex items-center justify-center w-6 h-6 bg-primary/10 rounded-md">
-                                  <Zap className="w-3 h-3 text-primary" />
-                                </div>
-                                <span className="text-sm font-medium">Quick Actions</span>
-                                <div className={`w-2 h-2 rounded-full ${serverStarted ? "bg-foreground" : "bg-muted-foreground"}`}></div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                <motion.div
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="group"
-                                >                                    <Button
-                                  variant="outline"
-                                  className="h-16 w-full flex-col gap-1 hover:bg-muted/50 transition-all duration-200"
-                                  onClick={() => {/* Download functionality */ }}
-                                >
-                                    <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded group-hover:bg-muted/40 transition-colors">
-                                      <Download className="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <div className="text-center">
-                                      <div className="text-xs font-medium">Download</div>
-                                      <div className="text-xs text-muted-foreground">Get files</div>
-                                    </div>
-                                  </Button>
-                                </motion.div>
-                                <motion.div
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className="group"
-                                >                                    <Button
-                                  variant="outline"
-                                  className="h-16 w-full flex-col gap-1 hover:bg-muted/50 transition-all duration-200"
-                                  onClick={() => {/* Share functionality */ }}
-                                >
-                                    <div className="flex items-center justify-center w-6 h-6 bg-muted/20 rounded group-hover:bg-muted/40 transition-colors">
-                                      <Share2 className="w-3 h-3 text-muted-foreground" />
-                                    </div>
-                                    <div className="text-center">
-                                      <div className="text-xs font-medium">Share</div>
-                                      <div className="text-xs text-muted-foreground">Export config</div>
-                                    </div>
-                                  </Button>
-                                </motion.div>
-                              </div>                        </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    </div>
-                  </div>
+                        <Compass className="w-3.5 h-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Draai</TooltipContent>
+                  </Tooltip>
                 </div>
-              </div>
+              </TooltipProvider>
             </div>
-
-              {/* Mobile responsive message */}
-              <div className="md:hidden p-6">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="bg-card border rounded-2xl shadow-sm p-8 text-center"
-                >
-                  <Server className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-xl font-semibold mb-2">Mobile Coming Soon</h2>
-                  <p className="text-muted-foreground">
-                    The MCP Server Generator is optimized for desktop. Mobile support coming soon!
-                  </p>
-                </motion.div>
-              </div>
-            </div>
-          </TooltipProvider>
-        </SidebarInset>
+          </div>
+        </div>
       </div>
     </SidebarProvider>
-  )
+  );
 }
