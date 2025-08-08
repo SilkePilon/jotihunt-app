@@ -476,7 +476,7 @@ export default function MapPage() {
     const root = createRoot(holder);
     popupRootRef.current = root;
     const color = overrideColor ?? markerColors[item.id];
-  const isVisited = visited[item.id] || false;
+    const isVisited = visited[item.id] || false;
     const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border';
     const cardClass =
       color === 'orange'
@@ -546,12 +546,57 @@ export default function MapPage() {
                   Kleur
                 </Button>
               </PopoverTrigger>
-              <PopoverContent align="end" className="w-auto p-2">
+              <PopoverContent
+                align="end"
+                className="w-auto p-2"
+              >
                 <div className="flex items-center gap-2">
-                  <Button aria-label="oranje" size="icon" variant="secondary" className="h-7 w-7 rounded-md bg-orange-500 border-2 border-orange-500" onClick={() => { setMarkerColors((m) => ({ ...m, [item.id]: 'orange' })); setTimeout(() => openPopupRef.current?.(item, 'orange'), 0); }} />
-                  <Button aria-label="blauw" size="icon" variant="secondary" className="h-7 w-7 rounded-md bg-blue-500 border-2 border-blue-500" onClick={() => { setMarkerColors((m) => ({ ...m, [item.id]: 'blue' })); setTimeout(() => openPopupRef.current?.(item, 'blue'), 0); }} />
-                  <Button aria-label="rood" size="icon" variant="secondary" className="h-7 w-7 rounded-md bg-red-500 border-2 border-red-500" onClick={() => { setMarkerColors((m) => ({ ...m, [item.id]: 'red' })); setTimeout(() => openPopupRef.current?.(item, 'red'), 0); }} />
-                  <Button aria-label="paars" size="icon" variant="secondary" className="h-7 w-7 rounded-md bg-purple-500 border-2 border-purple-500" onClick={() => { setMarkerColors((m) => ({ ...m, [item.id]: 'purple' })); setTimeout(() => openPopupRef.current?.(item, 'purple'), 0); }} />
+                  <Button
+                    aria-label="oranje"
+                    size="icon"
+                    variant="secondary"
+                    className="h-7 w-7 rounded-md bg-orange-500 border-2 border-orange-500"
+                    onClick={() => {
+                      setMarkerColors((m) => ({ ...m, [item.id]: 'orange' }));
+                      setTimeout(
+                        () => openPopupRef.current?.(item, 'orange'),
+                        0
+                      );
+                    }}
+                  />
+                  <Button
+                    aria-label="blauw"
+                    size="icon"
+                    variant="secondary"
+                    className="h-7 w-7 rounded-md bg-blue-500 border-2 border-blue-500"
+                    onClick={() => {
+                      setMarkerColors((m) => ({ ...m, [item.id]: 'blue' }));
+                      setTimeout(() => openPopupRef.current?.(item, 'blue'), 0);
+                    }}
+                  />
+                  <Button
+                    aria-label="rood"
+                    size="icon"
+                    variant="secondary"
+                    className="h-7 w-7 rounded-md bg-red-500 border-2 border-red-500"
+                    onClick={() => {
+                      setMarkerColors((m) => ({ ...m, [item.id]: 'red' }));
+                      setTimeout(() => openPopupRef.current?.(item, 'red'), 0);
+                    }}
+                  />
+                  <Button
+                    aria-label="paars"
+                    size="icon"
+                    variant="secondary"
+                    className="h-7 w-7 rounded-md bg-purple-500 border-2 border-purple-500"
+                    onClick={() => {
+                      setMarkerColors((m) => ({ ...m, [item.id]: 'purple' }));
+                      setTimeout(
+                        () => openPopupRef.current?.(item, 'purple'),
+                        0
+                      );
+                    }}
+                  />
                 </div>
               </PopoverContent>
             </Popover>
@@ -559,10 +604,16 @@ export default function MapPage() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                    aria-label={isVisited ? 'Bezocht door vossen' : 'Markeer als bezocht'}
+                    aria-label={
+                      isVisited ? 'Bezocht door vossen' : 'Markeer als bezocht'
+                    }
                     size="icon"
                     variant="secondary"
-                    className={`h-8 w-8 rounded-lg border-2 ${isVisited ? 'bg-green-500 text-white border-green-500 hover:bg-green-500' : 'border-border'}`}
+                    className={`h-8 w-8 rounded-lg border-2 ${
+                      isVisited
+                        ? 'bg-green-500 text-white border-green-500 hover:bg-green-500'
+                        : 'border-border'
+                    }`}
                     onClick={() => {
                       setVisited((v) => ({ ...v, [item.id]: !v[item.id] }));
                       setTimeout(() => openPopupRef.current?.(item, color), 0);
@@ -571,7 +622,9 @@ export default function MapPage() {
                     <Check className="w-3.5 h-3.5" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>{isVisited ? 'Bezocht' : 'Markeer bezocht'}</TooltipContent>
+                <TooltipContent>
+                  {isVisited ? 'Bezocht' : 'Markeer bezocht'}
+                </TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
@@ -688,7 +741,12 @@ export default function MapPage() {
     });
     markerRootsRef.current = [];
     markerContainersRef.current = {};
-    const markerById: Record<string, google.maps.marker.AdvancedMarkerElement | google.maps.Marker | google.maps.OverlayView> = {};
+    const markerById: Record<
+      string,
+      | google.maps.marker.AdvancedMarkerElement
+      | google.maps.Marker
+      | google.maps.OverlayView
+    > = {};
     if (!showMarkers || groups.length === 0) return;
     function buildHouseIcon(
       size = 28,
@@ -758,7 +816,7 @@ export default function MapPage() {
             </Tooltip>
           </TooltipProvider>
         );
-  markerContainersRef.current[item.id] = container;
+        markerContainersRef.current[item.id] = container;
         const adv = new google.maps.marker.AdvancedMarkerElement({
           position: item.position,
           map: mapRef.current!,
@@ -773,8 +831,8 @@ export default function MapPage() {
           });
           openPopupRef.current?.(item);
         });
-  markersRef.current.push(adv);
-  markerById[item.id] = adv;
+        markersRef.current.push(adv);
+        markerById[item.id] = adv;
       } else if (google.maps.OverlayView) {
         class DomMarker extends google.maps.OverlayView {
           position: LatLng;
@@ -834,7 +892,7 @@ export default function MapPage() {
             </Tooltip>
           </TooltipProvider>
         );
-  markerContainersRef.current[item.id] = container;
+        markerContainersRef.current[item.id] = container;
         const domMarker = new DomMarker(item.position, container, () => {
           setSelectedMarkerIds((prev) => {
             if (prev.includes(item.id))
@@ -867,12 +925,23 @@ export default function MapPage() {
               : '';
             const svg = `<?xml version='1.0'?>
               <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-                <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
-                <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${size / 2} L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${size / 2} Z' fill='none'/>
-                <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${size / 2 - pad - 7} h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${size / 2 - pad - 1} h -4 Z' fill='${glyph}'/>
+                <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
+              size - 1
+            }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+                <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${
+              size / 2
+            } L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${
+              size - pad - 6
+            } L ${pad + 6} ${size / 2} Z' fill='none'/>
+                <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${
+              size / 2 - pad - 7
+            } h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${
+              size / 2 - pad - 1
+            } h -4 Z' fill='${glyph}'/>
                 ${badge}
               </svg>`;
-            const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+            const url =
+              'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
             return {
               url,
               size: new google.maps.Size(size, size),
@@ -900,12 +969,15 @@ export default function MapPage() {
       const el = btn ?? (container.firstElementChild as HTMLElement | null);
       if (!el) return;
       el.classList.add('relative');
-      const existingBadge = el.querySelector('[data-role="visited-badge"]') as HTMLElement | null;
+      const existingBadge = el.querySelector(
+        '[data-role="visited-badge"]'
+      ) as HTMLElement | null;
       const isVisited = !!visited[id];
       if (isVisited && !existingBadge) {
         const badge = document.createElement('span');
         badge.setAttribute('data-role', 'visited-badge');
-        badge.className = 'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
+        badge.className =
+          'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
         el.appendChild(badge);
       } else if (!isVisited && existingBadge) {
         existingBadge.remove();
@@ -918,7 +990,7 @@ export default function MapPage() {
       const btn = container.querySelector('button') as HTMLElement | null;
       const el = btn ?? (container.firstElementChild as HTMLElement | null);
       if (!el) return;
-  el.classList.add('relative');
+      el.classList.add('relative');
       el.classList.add('border-2');
       el.classList.remove(
         'bg-card',
@@ -962,12 +1034,15 @@ export default function MapPage() {
         el.classList.add('border-transparent');
       }
 
-      const existingBadge = el.querySelector('[data-role="visited-badge"]') as HTMLElement | null;
+      const existingBadge = el.querySelector(
+        '[data-role="visited-badge"]'
+      ) as HTMLElement | null;
       const isVisited = !!visited[id];
       if (isVisited && !existingBadge) {
         const badge = document.createElement('span');
         badge.setAttribute('data-role', 'visited-badge');
-        badge.className = 'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
+        badge.className =
+          'absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-green-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]';
         el.appendChild(badge);
       } else if (!isVisited && existingBadge) {
         existingBadge.remove();
@@ -984,7 +1059,11 @@ export default function MapPage() {
       const idx = markersRef.current.findIndex((m) => {
         if ('getPosition' in (m as any)) {
           const pos = (m as google.maps.Marker).getPosition();
-          return !!pos && Math.abs(pos.lat() - g.position.lat) < 1e-6 && Math.abs(pos.lng() - g.position.lng) < 1e-6;
+          return (
+            !!pos &&
+            Math.abs(pos.lat() - g.position.lat) < 1e-6 &&
+            Math.abs(pos.lng() - g.position.lng) < 1e-6
+          );
         }
         return false;
       });
@@ -1006,12 +1085,23 @@ export default function MapPage() {
             : '';
           const svg = `<?xml version='1.0'?>
             <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-              <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
-              <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${size / 2} L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${size - pad - 6} L ${pad + 6} ${size / 2} Z' fill='none'/>
-              <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${size / 2 - pad - 7} h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${size / 2 - pad - 1} h -4 Z' fill='${glyph}'/>
+              <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
+            size - 1
+          }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+              <path d='M ${size / 2} ${pad + 6} L ${size - pad - 6} ${
+            size / 2
+          } L ${size - pad - 6} ${size - pad - 6} L ${pad + 6} ${
+            size - pad - 6
+          } L ${pad + 6} ${size / 2} Z' fill='none'/>
+              <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${
+            size / 2 - pad - 7
+          } h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${
+            size / 2 - pad - 1
+          } h -4 Z' fill='${glyph}'/>
               ${badge}
             </svg>`;
-          const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+          const url =
+            'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
           marker.setIcon({
             url,
             size: new google.maps.Size(size, size),
