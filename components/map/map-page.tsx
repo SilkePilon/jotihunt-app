@@ -458,22 +458,14 @@ export default function MapPage() {
     if (!popupRootRef.current) return;
     const color = overrideColor ?? markerColors[item.id];
     const isVisited = visited[item.id] || false;
-    const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border';
-    const cardClass =
-      color === 'orange'
-        ? `bg-orange-500 border-orange-500 text-white ${baseCard}`
-        : color === 'blue'
-        ? `bg-blue-500 border-blue-500 text-white ${baseCard}`
-        : color === 'red'
-        ? `bg-red-500 border-red-500 text-white ${baseCard}`
-        : color === 'purple'
-        ? `bg-purple-500 border-purple-500 text-white ${baseCard}`
-        : `bg-card ${baseCard}`;
-    const secondaryTextClass = color
-      ? 'text-white/80'
-      : 'text-muted-foreground';
+  const baseCard = 'rounded-xl shadow-lg p-3 min-w-[240px] border-2 bg-card';
+    const cardClass = baseCard;
+    const borderStyle = color
+      ? { borderColor: colorStyles(color as MarkerColor).strokeColor }
+      : undefined;
+    const secondaryTextClass = 'text-muted-foreground';
     popupRootRef.current.render(
-      <Card className={cardClass}>
+      <Card className={cardClass} style={borderStyle}>
         <div className="flex items-start gap-2">
           <div className="flex-1">
             <div className="font-semibold leading-none mb-1">{item.name}</div>
@@ -1489,43 +1481,62 @@ export default function MapPage() {
                   {selectedMarkerIds.map((id) => {
                     const g = groups.find((x) => x.id === id);
                     if (!g) return null;
+                    const mc = markerColors[id];
+                    const tint = mc
+                      ? colorStyles(mc as MarkerColor).strokeColor
+                      : undefined;
                     return (
                       <div
                         key={id}
-                        className="flex items-center gap-1 h-8 rounded-lg border px-2"
+                        className="flex items-center h-8 rounded-lg border-2 border-border bg-secondary/60 shadow-sm pl-2 pr-1 gap-1"
+                        style={{ borderColor: tint }}
                       >
                         <Home className="w-3.5 h-3.5 mr-1.5" />
-                        <span className="text-sm whitespace-nowrap max-w-[40vw] truncate">
+                        <span className="text-sm font-medium whitespace-nowrap truncate max-w-[38vw] sm:max-w-[280px]">
                           {g.name}
                         </span>
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="h-7 w-7 rounded-md"
-                          title={`Focus op ${g.name}`}
-                          onClick={() => {
-                            const map = mapRef.current;
-                            if (!map) return;
-                            const currentZoom = map.getZoom() ?? 9;
-                            if (currentZoom < 15) map.setZoom(15);
-                            map.panTo(g.position);
-                          }}
-                        >
-                          <LocateFixed className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="secondary"
-                          className="h-7 w-7 rounded-md"
-                          title={`Verwijder selectie ${g.name}`}
-                          onClick={() =>
-                            setSelectedMarkerIds((prev) =>
-                              prev.filter((x) => x !== id)
-                            )
-                          }
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 rounded-md"
+                                aria-label={`Focus op ${g.name}`}
+                                onClick={() => {
+                                  const map = mapRef.current;
+                                  if (!map) return;
+                                  const currentZoom = map.getZoom() ?? 9;
+                                  if (currentZoom < 15) map.setZoom(15);
+                                  map.panTo(g.position);
+                                }}
+                              >
+                                <LocateFixed className="w-3.5 h-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Focus</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 rounded-md"
+                                aria-label={`Verwijder selectie ${g.name}`}
+                                onClick={() =>
+                                  setSelectedMarkerIds((prev) =>
+                                    prev.filter((x) => x !== id)
+                                  )
+                                }
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Verwijder</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </div>
                     );
                   })}
