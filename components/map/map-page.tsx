@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 import {
   Tooltip,
   TooltipContent,
@@ -51,6 +53,15 @@ export default function MapPage() {
   >([]);
   const markerRootsRef = useRef<Root[]>([]);
   const markerContainersRef = useRef<Record<string, HTMLDivElement>>({});
+  const customMarkerRefs = useRef<
+    Array<
+      | google.maps.marker.AdvancedMarkerElement
+      | google.maps.Marker
+      | google.maps.OverlayView
+    >
+  >([]);
+  const customMarkerRootsRef = useRef<Root[]>([]);
+  const customMarkerContainersRef = useRef<Record<string, HTMLDivElement>>({});
   const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(
     null
   );
@@ -119,6 +130,15 @@ export default function MapPage() {
     {}
   );
   const [visited, setVisited] = useState<Record<string, boolean>>({});
+  const [coordInput, setCoordInput] = useState('');
+  const [customPoints, setCustomPoints] = useState<
+    Array<{ id: string; position: LatLng; label?: string }>
+  >([]);
+  const [lastCustomPoint, setLastCustomPoint] = useState<LatLng | null>(null);
+  const [selectedHuntGroup, setSelectedHuntGroup] = useState<
+    'Alpha' | 'Bravo' | 'Charlie' | 'Delta' | 'Echo' | 'Foxtrot' | null
+  >(null);
+  const [coordOutsideNL, setCoordOutsideNL] = useState(false);
   const [groups, setGroups] = useState<
     Array<{
       id: string;
@@ -434,6 +454,119 @@ export default function MapPage() {
       m.setMap(null);
     } else if ('map' in m) {
       (m as google.maps.marker.AdvancedMarkerElement).map = null;
+    }
+  }
+
+  // Convert RD (Rijksdriehoekstelsel) to WGS84 lat/lng
+  function rdToWgs(x: number, y: number): LatLng {
+    const x0 = 155000;
+    const y0 = 463000;
+    const phi0 = 52.15517440;
+    const lam0 = 5.38720621;
+    const dx = (x - x0) * 1e-5;
+    const dy = (y - y0) * 1e-5;
+    const phi =
+      phi0 +
+      (3235.65389 * dy +
+        -32.58297 * dx * dx +
+        -0.2475 * dy * dy +
+        -0.84978 * dx * dx * dy +
+        -0.0655 * dy * dy * dy +
+        -0.01709 * dx * dx * dy * dy +
+        -0.00738 * dx +
+        0.0053 * Math.pow(dx, 4) +
+        -0.00039 * dx * dx * Math.pow(dy, 3) +
+        0.00033 * Math.pow(dx, 3) +
+        -0.00012 * dx * dx * Math.pow(dy, 4)) /
+        3600;
+    const lam =
+      lam0 +
+      (5260.52916 * dx +
+        105.94684 * dx * dy +
+        2.45656 * dx * dy * dy +
+        -0.81885 * Math.pow(dx, 3) +
+        0.05594 * dx * Math.pow(dy, 3) +
+        -0.05607 * Math.pow(dx, 3) * dy +
+        0.01199 * dy +
+        -0.00256 * Math.pow(dx, 3) * dy * dy +
+        0.00128 * dx * Math.pow(dy, 4) +
+        0.00022 * dy * dy +
+        -0.00022 * dx * dx +
+        0.00026 * Math.pow(dx, 5)) /
+        3600;
+    return { lat: phi, lng: lam };
+  }
+
+  function parseCoordInput(val: string): LatLng | null {
+    const s = val.trim();
+    if (!s) return null;
+    const parts = s.replace(',', ' ').split(/\s+/).filter(Boolean);
+    if (parts.length !== 2) return null;
+    const a = parts[0];
+    const b = parts[1];
+    const fa = parseFloat(a);
+    const fb = parseFloat(b);
+    // If decimals and plausible lat/lng, assume WGS84
+    if (
+      (a.includes('.') || a.includes(',')) || (b.includes('.') || b.includes(','))
+    ) {
+      if (isFinite(fa) && isFinite(fb) && Math.abs(fa) <= 90 && Math.abs(fb) <= 180) {
+        return { lat: fa, lng: fb };
+      }
+      return null;
+    }
+    // Otherwise assume RD shorthand like "1234 5678" → scale to meters
+    const xa = parseInt(a, 10);
+    const yb = parseInt(b, 10);
+    if (!Number.isFinite(xa) || !Number.isFinite(yb)) return null;
+    let x = xa;
+    let y = yb;
+    // Heuristics: 4 digits → *100, 5 digits → *10
+    if (x < 10000) x *= 100;
+    else if (x < 100000) x *= 10;
+    if (y < 10000) y *= 100;
+    else if (y < 100000) y *= 10;
+    return rdToWgs(x, y);
+  }
+
+  function addCustomPointFromInput() {
+    const pos = parseCoordInput(coordInput);
+    if (!pos) {
+      toast.error('Ongeldige coördinaten. Gebruik b.v. "1234 5678" of "52.123 5.678"');
+      return;
+    }
+    const id = Math.random().toString(36).slice(2);
+    setCustomPoints((prev) => [...prev, { id, position: pos }]);
+    setCoordInput('');
+    setLastCustomPoint(pos);
+    setSelectedHuntGroup('Alpha');
+    const outside = !isWithinNetherlands(pos);
+    setCoordOutsideNL(outside);
+    if (outside) {
+      toast('Locatie ligt buiten Nederland');
+    }
+    if (mapRef.current) {
+      const map = mapRef.current;
+      const currentZoom = map.getZoom() ?? 9;
+      if (currentZoom < 15) map.setZoom(15);
+      map.panTo(pos);
+    }
+  }
+
+  function isWithinNetherlands(pos: LatLng): boolean {
+    const { lat, lng } = pos;
+    // Rough bounding box covering NL mainland
+    return lat >= 50.5 && lat <= 53.7 && lng >= 3.3 && lng <= 7.3;
+  }
+
+  async function copyGoogleMapsLink() {
+    if (!lastCustomPoint) return;
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${lastCustomPoint.lat},${lastCustomPoint.lng}&travelmode=driving`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Google Maps link gekopieerd');
+    } catch {
+      toast.error('Kopiëren mislukt');
     }
   }
 
@@ -1168,6 +1301,98 @@ export default function MapPage() {
     });
   }, [showMarkers, isReady, groupsKey, mapId, baseMap]);
 
+  // Render custom input points
+  useEffect(() => {
+    if (!isReady || !mapRef.current) return;
+    customMarkerRefs.current.forEach(detachMarker);
+    customMarkerRefs.current = [];
+    customMarkerRootsRef.current.forEach((r) => {
+      try { r.unmount(); } catch {}
+    });
+    customMarkerRootsRef.current = [];
+    customMarkerContainersRef.current = {};
+    if (customPoints.length === 0) return;
+    customPoints.forEach((pt) => {
+      if (mapId && google.maps.marker?.AdvancedMarkerElement) {
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        customMarkerRootsRef.current.push(root);
+        root.render(
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  aria-label={`Ingevoerde coördinaat`}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Ingevoerde coördinaat</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+        customMarkerContainersRef.current[pt.id] = container;
+        const adv = new google.maps.marker.AdvancedMarkerElement({
+          position: pt.position,
+          map: mapRef.current!,
+          content: container,
+        });
+        customMarkerRefs.current.push(adv);
+      } else if (google.maps.OverlayView) {
+        class DomMarker extends google.maps.OverlayView {
+          position: LatLng; container: HTMLDivElement;
+          constructor(position: LatLng, content: HTMLElement) {
+            super(); this.position = position; this.container = document.createElement('div');
+            this.container.style.position = 'absolute'; this.container.appendChild(content);
+          }
+          onAdd() { this.getPanes()?.overlayMouseTarget.appendChild(this.container); }
+          draw() {
+            const projection = this.getProjection(); if (!projection) return;
+            const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(this.position));
+            if (!point) return; this.container.style.left = `${point.x}px`; this.container.style.top = `${point.y}px`; this.container.style.transform = 'translate(-50%, -50%)';
+          }
+          onRemove() { this.container.remove(); }
+        }
+        const container = document.createElement('div');
+        const root = createRoot(container);
+        customMarkerRootsRef.current.push(root);
+        root.render(
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  aria-label={`Ingevoerde coördinaat`}
+                >
+                  <MapPin className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Ingevoerde coördinaat</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
+        const domMarker = new DomMarker(pt.position, container);
+        domMarker.setMap(mapRef.current!);
+        customMarkerRefs.current.push(domMarker);
+      } else {
+        const size = 28; const bg = '#ffffff'; const border = '#e5e7eb'; const radius = 6; const glyph = '#111827'; const pad = 3;
+        const svg = `<?xml version='1.0'?>
+          <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
+            <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+            <path d='M ${size/2} ${pad+7} l ${size/2 - pad - 7} ${size/2 - pad - 7} h -4 v ${size/2 - pad - 1} h -${size - 2*pad - 6} v -${size/2 - pad - 1} h -4 Z' fill='${glyph}'/>
+          </svg>`;
+        const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        const marker = new google.maps.Marker({ position: pt.position, map: mapRef.current!, icon: { url, size: new google.maps.Size(size, size), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size/2, size/2) } });
+        customMarkerRefs.current.push(marker);
+      }
+    });
+  }, [isReady, customPoints, mapId]);
+
   useEffect(() => {
     Object.entries(markerContainersRef.current).forEach(([id, container]) => {
       const btn = container.querySelector('button') as HTMLElement | null;
@@ -1582,6 +1807,63 @@ export default function MapPage() {
               ref={mapContainerRef}
               className="absolute inset-0"
             />
+            {/* Top-left coordinate input card */}
+            <div className="absolute top-4 left-4 z-20 max-w-[95vw] pointer-events-auto">
+              <div
+                className={
+                  `bg-card ${coordOutsideNL ? 'border-2 border-red-500' : 'border'} rounded-xl shadow-sm p-1.5`
+                }
+              >
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <Input
+                    value={coordInput}
+                    onChange={(e) => setCoordInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') addCustomPointFromInput();
+                    }}
+                    placeholder="1234 5678"
+                    className="h-8 w-[200px] sm:w-[260px] rounded-lg"
+                    aria-label="Coördinaten invoer"
+                  />
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className={`h-8 px-3 rounded-lg ${coordOutsideNL ? 'border-2 border-red-500' : 'border-2 border-border'}`}
+                    onClick={addCustomPointFromInput}
+                  >
+                    Toon
+                  </Button>
+                </div>
+                {lastCustomPoint && (
+                  <>
+                    <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                      {(['Alpha','Bravo','Charlie','Delta','Echo','Foxtrot'] as const).map((name) => (
+                        <Button
+                          key={name}
+                          variant="secondary"
+                          size="sm"
+                          className={`h-8 px-3 rounded-lg border-2 ${selectedHuntGroup === name ? 'border-border' : 'border-transparent'}`}
+                          onClick={() => setSelectedHuntGroup(name)}
+                        >
+                          {name}
+                        </Button>
+                      ))}
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className={`h-8 px-3 rounded-lg ${coordOutsideNL ? 'border-2 border-red-500' : 'border-2 border-border'}`}
+                        onClick={copyGoogleMapsLink}
+                        title="Kopieer Google Maps link"
+                      >
+                        Kopieer Google Maps link
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
             {!apiKey && (
               <div className="absolute inset-0 flex items-center justify-center p-6">
                 <Card className="max-w-md w-full">
