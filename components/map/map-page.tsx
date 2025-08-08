@@ -16,7 +16,16 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { MapPin, Route, Car, Palette, LocateFixed, Home, Check, X } from 'lucide-react';
+import {
+  MapPin,
+  Route,
+  Car,
+  Palette,
+  LocateFixed,
+  Home,
+  Check,
+  X,
+} from 'lucide-react';
 import { PlaygroundNavbar } from '@/components/playground-navbar';
 import { useTheme } from 'next-themes';
 import { presets } from '@/app/data/presets';
@@ -104,7 +113,6 @@ export default function MapPage() {
   const areaPolygonsRef = useRef<
     Record<MarkerColor, google.maps.Polygon | null>
   >({ orange: null, blue: null, red: null, purple: null });
-  
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,12 +246,17 @@ export default function MapPage() {
     []
   );
   const mapId = useMemo(() => process.env.NEXT_PUBLIC_GOOGLE_MAP_ID || '', []);
-  const userLocationApi = useUserLocation(isReady, mapRef, mapId) as unknown as {
+  const userLocationApi = useUserLocation(
+    isReady,
+    mapRef,
+    mapId
+  ) as unknown as {
     locationError: string | null;
     requestLocation: () => void;
     clearLocationError: () => void;
   };
-  const { locationError, requestLocation, clearLocationError } = userLocationApi;
+  const { locationError, requestLocation, clearLocationError } =
+    userLocationApi;
 
   const subscriptionsUrl = useMemo(() => {
     if (useArchiveData) {
@@ -256,7 +269,6 @@ export default function MapPage() {
     return '/api/jotihunt/subscriptions';
   }, [useArchiveData]);
 
-  
   useEffect(() => {
     let active = true;
     async function loadGroups() {
@@ -329,12 +341,12 @@ export default function MapPage() {
     }
   }
 
-  
-
   function addCustomPointFromInput() {
     const pos = parseCoordInput(coordInput);
     if (!pos) {
-      toast.error('Ongeldige coördinaten. Gebruik b.v. "1234 5678" of "52.123 5.678"');
+      toast.error(
+        'Ongeldige coördinaten. Gebruik b.v. "1234 5678" of "52.123 5.678"'
+      );
       return;
     }
     const id = Math.random().toString(36).slice(2);
@@ -354,8 +366,6 @@ export default function MapPage() {
       map.panTo(pos);
     }
   }
-
-  
 
   async function copyGoogleMapsLink() {
     if (!lastCustomPoint) return;
@@ -697,8 +707,6 @@ export default function MapPage() {
     mapRef.current.setHeading(use3D ? 45 : 0);
   }, [use3D, isReady]);
 
-  
-
   useEffect(() => {
     if (!isReady || !mapRef.current) return;
     markersRef.current.forEach(detachMarker);
@@ -896,7 +904,9 @@ export default function MapPage() {
     customMarkerRefs.current.forEach(detachMarker);
     customMarkerRefs.current = [];
     customMarkerRootsRef.current.forEach((r) => {
-      try { r.unmount(); } catch {}
+      try {
+        r.unmount();
+      } catch {}
     });
     customMarkerRootsRef.current = [];
     customMarkerContainersRef.current = {};
@@ -913,7 +923,9 @@ export default function MapPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  className={
+                    'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+                  }
                   aria-label={`Ingevoerde coördinaat`}
                 >
                   <MapPin className="w-4 h-4" />
@@ -932,18 +944,32 @@ export default function MapPage() {
         customMarkerRefs.current.push(adv);
       } else if (google.maps.OverlayView) {
         class DomMarker extends google.maps.OverlayView {
-          position: LatLng; container: HTMLDivElement;
+          position: LatLng;
+          container: HTMLDivElement;
           constructor(position: LatLng, content: HTMLElement) {
-            super(); this.position = position; this.container = document.createElement('div');
-            this.container.style.position = 'absolute'; this.container.appendChild(content);
+            super();
+            this.position = position;
+            this.container = document.createElement('div');
+            this.container.style.position = 'absolute';
+            this.container.appendChild(content);
           }
-          onAdd() { this.getPanes()?.overlayMouseTarget.appendChild(this.container); }
+          onAdd() {
+            this.getPanes()?.overlayMouseTarget.appendChild(this.container);
+          }
           draw() {
-            const projection = this.getProjection(); if (!projection) return;
-            const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(this.position));
-            if (!point) return; this.container.style.left = `${point.x}px`; this.container.style.top = `${point.y}px`; this.container.style.transform = 'translate(-50%, -50%)';
+            const projection = this.getProjection();
+            if (!projection) return;
+            const point = projection.fromLatLngToDivPixel(
+              new google.maps.LatLng(this.position)
+            );
+            if (!point) return;
+            this.container.style.left = `${point.x}px`;
+            this.container.style.top = `${point.y}px`;
+            this.container.style.transform = 'translate(-50%, -50%)';
           }
-          onRemove() { this.container.remove(); }
+          onRemove() {
+            this.container.remove();
+          }
         }
         const container = document.createElement('div');
         const root = createRoot(container);
@@ -955,7 +981,9 @@ export default function MapPage() {
                 <Button
                   variant="secondary"
                   size="sm"
-                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  className={
+                    'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-border shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+                  }
                   aria-label={`Ingevoerde coördinaat`}
                 >
                   <MapPin className="w-4 h-4" />
@@ -969,14 +997,35 @@ export default function MapPage() {
         domMarker.setMap(mapRef.current!);
         customMarkerRefs.current.push(domMarker);
       } else {
-        const size = 28; const bg = '#ffffff'; const border = '#e5e7eb'; const radius = 6; const glyph = '#111827'; const pad = 3;
+        const size = 28;
+        const bg = '#ffffff';
+        const border = '#e5e7eb';
+        const radius = 6;
+        const glyph = '#111827';
+        const pad = 3;
         const svg = `<?xml version='1.0'?>
           <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-            <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
-            <path d='M ${size/2} ${pad+7} l ${size/2 - pad - 7} ${size/2 - pad - 7} h -4 v ${size/2 - pad - 1} h -${size - 2*pad - 6} v -${size/2 - pad - 1} h -4 Z' fill='${glyph}'/>
+            <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
+          size - 1
+        }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+            <path d='M ${size / 2} ${pad + 7} l ${size / 2 - pad - 7} ${
+          size / 2 - pad - 7
+        } h -4 v ${size / 2 - pad - 1} h -${size - 2 * pad - 6} v -${
+          size / 2 - pad - 1
+        } h -4 Z' fill='${glyph}'/>
           </svg>`;
-        const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
-        const marker = new google.maps.Marker({ position: pt.position, map: mapRef.current!, icon: { url, size: new google.maps.Size(size, size), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size/2, size/2) } });
+        const url =
+          'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        const marker = new google.maps.Marker({
+          position: pt.position,
+          map: mapRef.current!,
+          icon: {
+            url,
+            size: new google.maps.Size(size, size),
+            scaledSize: new google.maps.Size(size, size),
+            anchor: new google.maps.Point(size / 2, size / 2),
+          },
+        });
         customMarkerRefs.current.push(marker);
       }
     });

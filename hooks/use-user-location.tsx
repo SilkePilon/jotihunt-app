@@ -1,8 +1,13 @@
-"use client";
+'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { MutableRefObject } from 'react';
 import { createRoot, Root } from 'react-dom/client';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '../components/ui/tooltip';
 import { Button } from '../components/ui/button';
 import { User } from 'lucide-react';
 
@@ -19,13 +24,23 @@ export function useUserLocation(
   mapRef: MutableRefObject<google.maps.Map | null>,
   mapId?: string
 ): UseUserLocationResult {
-  const userMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | google.maps.Marker | google.maps.OverlayView | null>(null);
+  const userMarkerRef = useRef<
+    | google.maps.marker.AdvancedMarkerElement
+    | google.maps.Marker
+    | google.maps.OverlayView
+    | null
+  >(null);
   const userMarkerRootRef = useRef<Root | null>(null);
   const userMarkerContainerRef = useRef<HTMLDivElement | null>(null);
   const geoWatchIdRef = useRef<number | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
-  function detachMarker(m: google.maps.marker.AdvancedMarkerElement | google.maps.Marker | google.maps.OverlayView) {
+  function detachMarker(
+    m:
+      | google.maps.marker.AdvancedMarkerElement
+      | google.maps.Marker
+      | google.maps.OverlayView
+  ) {
     if ('setMap' in m && typeof m.setMap === 'function') {
       m.setMap(null);
     } else if ('map' in m) {
@@ -47,7 +62,9 @@ export function useUserLocation(
               <Button
                 variant="secondary"
                 size="sm"
-                className={'relative h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                className={
+                  'relative h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+                }
                 aria-label={`Mijn locatie`}
               >
                 <User className="w-4 h-4" />
@@ -66,12 +83,18 @@ export function useUserLocation(
           m.setPosition(pos as any);
           return;
         }
-        const adv = userMarkerRef.current as google.maps.marker.AdvancedMarkerElement & { position?: LatLng };
+        const adv =
+          userMarkerRef.current as google.maps.marker.AdvancedMarkerElement & {
+            position?: LatLng;
+          };
         if (adv && 'position' in adv) {
           (adv as any).position = pos;
           return;
         }
-        const ov = userMarkerRef.current as google.maps.OverlayView & { position?: LatLng; draw?: () => void };
+        const ov = userMarkerRef.current as google.maps.OverlayView & {
+          position?: LatLng;
+          draw?: () => void;
+        };
         if (ov && 'position' in ov) {
           (ov as any).position = pos;
           if (typeof ov.draw === 'function') ov.draw();
@@ -92,17 +115,32 @@ export function useUserLocation(
       }
       if (google.maps.OverlayView) {
         class DomUserMarker extends google.maps.OverlayView {
-          position: LatLng; container: HTMLDivElement;
+          position: LatLng;
+          container: HTMLDivElement;
           constructor(p: LatLng, content: HTMLElement) {
-            super(); this.position = p; this.container = document.createElement('div'); this.container.style.position = 'absolute'; this.container.appendChild(content);
+            super();
+            this.position = p;
+            this.container = document.createElement('div');
+            this.container.style.position = 'absolute';
+            this.container.appendChild(content);
           }
-          onAdd() { this.getPanes()?.overlayMouseTarget.appendChild(this.container); }
+          onAdd() {
+            this.getPanes()?.overlayMouseTarget.appendChild(this.container);
+          }
           draw() {
-            const projection = this.getProjection(); if (!projection) return;
-            const point = projection.fromLatLngToDivPixel(new google.maps.LatLng(this.position));
-            if (!point) return; this.container.style.left = `${point.x}px`; this.container.style.top = `${point.y}px`; this.container.style.transform = 'translate(-50%, -50%)';
+            const projection = this.getProjection();
+            if (!projection) return;
+            const point = projection.fromLatLngToDivPixel(
+              new google.maps.LatLng(this.position)
+            );
+            if (!point) return;
+            this.container.style.left = `${point.x}px`;
+            this.container.style.top = `${point.y}px`;
+            this.container.style.transform = 'translate(-50%, -50%)';
           }
-          onRemove() { this.container.remove(); }
+          onRemove() {
+            this.container.remove();
+          }
         }
         const container = document.createElement('div');
         userMarkerContainerRef.current = container;
@@ -132,7 +170,9 @@ export function useUserLocation(
       `;
       const svg = `<?xml version='1.0'?>
         <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
-          <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${size - 1}' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+          <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
+        size - 1
+      }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
           ${glyph}
           <circle cx='${cx}' cy='${cy}' r='${badgeR}' fill='#ef4444' stroke='#ffffff' stroke-width='1.5' />
         </svg>`;
@@ -140,23 +180,32 @@ export function useUserLocation(
       const marker = new google.maps.Marker({
         position: pos,
         map: mapRef.current!,
-        icon: { url, size: new google.maps.Size(size, size), scaledSize: new google.maps.Size(size, size), anchor: new google.maps.Point(size / 2, size / 2) },
+        icon: {
+          url,
+          size: new google.maps.Size(size, size),
+          scaledSize: new google.maps.Size(size, size),
+          anchor: new google.maps.Point(size / 2, size / 2),
+        },
       });
       userMarkerRef.current = marker;
     }
     const watchId = navigator.geolocation.watchPosition(
       (p) => {
-        createOrUpdateUserMarker({ lat: p.coords.latitude, lng: p.coords.longitude });
+        createOrUpdateUserMarker({
+          lat: p.coords.latitude,
+          lng: p.coords.longitude,
+        });
         if (locationError) setLocationError(null);
       },
       (e) => {
-        const msg = e && typeof e === 'object' && 'code' in e
-          ? (e as GeolocationPositionError).code === 1
-            ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
-            : (e as GeolocationPositionError).code === 2
-            ? 'Locatie niet beschikbaar.'
-            : 'Locatie aanvraag verlopen.'
-          : 'Kon locatie niet ophalen.';
+        const msg =
+          e && typeof e === 'object' && 'code' in e
+            ? (e as GeolocationPositionError).code === 1
+              ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
+              : (e as GeolocationPositionError).code === 2
+              ? 'Locatie niet beschikbaar.'
+              : 'Locatie aanvraag verlopen.'
+            : 'Kon locatie niet ophalen.';
         setLocationError(msg);
       },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
@@ -164,15 +213,21 @@ export function useUserLocation(
     geoWatchIdRef.current = watchId;
     return () => {
       if (geoWatchIdRef.current != null) {
-        try { navigator.geolocation.clearWatch(geoWatchIdRef.current); } catch {}
+        try {
+          navigator.geolocation.clearWatch(geoWatchIdRef.current);
+        } catch {}
         geoWatchIdRef.current = null;
       }
       if (userMarkerRef.current) {
-        try { detachMarker(userMarkerRef.current); } catch {}
+        try {
+          detachMarker(userMarkerRef.current);
+        } catch {}
         userMarkerRef.current = null;
       }
       if (userMarkerRootRef.current) {
-        try { userMarkerRootRef.current.unmount(); } catch {}
+        try {
+          userMarkerRootRef.current.unmount();
+        } catch {}
         userMarkerRootRef.current = null;
       }
       userMarkerContainerRef.current = null;
@@ -193,13 +248,14 @@ export function useUserLocation(
           setLocationError(null);
         },
         (e) => {
-          const msg = e && typeof e === 'object' && 'code' in e
-            ? (e as GeolocationPositionError).code === 1
-              ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
-              : (e as GeolocationPositionError).code === 2
-              ? 'Locatie niet beschikbaar.'
-              : 'Locatie aanvraag verlopen.'
-            : 'Kon locatie niet ophalen.';
+          const msg =
+            e && typeof e === 'object' && 'code' in e
+              ? (e as GeolocationPositionError).code === 1
+                ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
+                : (e as GeolocationPositionError).code === 2
+                ? 'Locatie niet beschikbaar.'
+                : 'Locatie aanvraag verlopen.'
+              : 'Kon locatie niet ophalen.';
           setLocationError(msg);
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }

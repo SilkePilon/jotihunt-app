@@ -14,7 +14,8 @@ export function parseGroupPosition(record: unknown): LatLng | null {
   if (!record || typeof record !== 'object') return null;
   const obj = record as Record<string, unknown>;
   const latCandidate = obj['lat'] ?? obj['latitude'];
-  const lngCandidate = obj['lng'] ?? obj['lon'] ?? obj['long'] ?? obj['longitude'];
+  const lngCandidate =
+    obj['lng'] ?? obj['lon'] ?? obj['long'] ?? obj['longitude'];
   const latNum = toNumber(latCandidate);
   const lngNum = toNumber(lngCandidate);
   if (latNum !== null && lngNum !== null) return { lat: latNum, lng: lngNum };
@@ -27,7 +28,9 @@ export function parseGroupPosition(record: unknown): LatLng | null {
   if (location && typeof location === 'object') {
     const loc = location as Record<string, unknown>;
     const llat = toNumber(loc['lat']);
-    const llng = toNumber(loc['lng'] ?? loc['lon'] ?? loc['long'] ?? loc['longitude']);
+    const llng = toNumber(
+      loc['lng'] ?? loc['lon'] ?? loc['long'] ?? loc['longitude']
+    );
     if (llat !== null && llng !== null) return { lat: llat, lng: llng };
     const coordinates = loc['coordinates'];
     if (Array.isArray(coordinates) && coordinates.length >= 2) {
@@ -65,7 +68,10 @@ export function parseGroupName(record: unknown): string {
   return 'Onbekend';
 }
 
-export function extractDetail<T = unknown>(rec: Record<string, unknown>, key: string): T | null {
+export function extractDetail<T = unknown>(
+  rec: Record<string, unknown>,
+  key: string
+): T | null {
   if (key in rec && rec[key] != null) return rec[key] as T;
   return null;
 }
@@ -82,20 +88,33 @@ export function convexHullLatLng(points: LatLng[]): LatLng[] {
   ) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
   const lower: { x: number; y: number; src: LatLng }[] = [];
   for (const p of pts) {
-    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) lower.pop();
+    while (
+      lower.length >= 2 &&
+      cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0
+    )
+      lower.pop();
     lower.push(p);
   }
   const upper: { x: number; y: number; src: LatLng }[] = [];
   for (let i = pts.length - 1; i >= 0; i--) {
     const p = pts[i];
-    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) upper.pop();
+    while (
+      upper.length >= 2 &&
+      cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0
+    )
+      upper.pop();
     upper.push(p);
   }
-  const hull = lower.slice(0, lower.length - 1).concat(upper.slice(0, upper.length - 1));
+  const hull = lower
+    .slice(0, lower.length - 1)
+    .concat(upper.slice(0, upper.length - 1));
   return hull.map((h) => h.src);
 }
 
-export function colorStyles(c: MarkerColor): { fillColor: string; strokeColor: string } {
+export function colorStyles(c: MarkerColor): {
+  fillColor: string;
+  strokeColor: string;
+} {
   if (c === 'orange') return { fillColor: '#f97316', strokeColor: '#f97316' };
   if (c === 'blue') return { fillColor: '#3b82f6', strokeColor: '#3b82f6' };
   if (c === 'red') return { fillColor: '#ef4444', strokeColor: '#ef4444' };
@@ -105,7 +124,7 @@ export function colorStyles(c: MarkerColor): { fillColor: string; strokeColor: s
 export function rdToWgs(x: number, y: number): LatLng {
   const x0 = 155000;
   const y0 = 463000;
-  const phi0 = 52.15517440;
+  const phi0 = 52.1551744;
   const lam0 = 5.38720621;
   const dx = (x - x0) * 1e-5;
   const dy = (y - y0) * 1e-5;
@@ -150,8 +169,18 @@ export function parseCoordInput(val: string): LatLng | null {
   const b = parts[1];
   const fa = parseFloat(a);
   const fb = parseFloat(b);
-  if ((a.includes('.') || a.includes(',')) || (b.includes('.') || b.includes(','))) {
-    if (isFinite(fa) && isFinite(fb) && Math.abs(fa) <= 90 && Math.abs(fb) <= 180) {
+  if (
+    a.includes('.') ||
+    a.includes(',') ||
+    b.includes('.') ||
+    b.includes(',')
+  ) {
+    if (
+      isFinite(fa) &&
+      isFinite(fb) &&
+      Math.abs(fa) <= 90 &&
+      Math.abs(fb) <= 180
+    ) {
       return { lat: fa, lng: fb };
     }
     return null;
