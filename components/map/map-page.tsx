@@ -103,9 +103,11 @@ export default function MapPage() {
   const userMarkerRootRef = useRef<Root | null>(null);
   const userMarkerContainerRef = useRef<HTMLDivElement | null>(null);
   const geoWatchIdRef = useRef<number | null>(null);
+  const requestLocationRef = useRef<(() => void) | null>(null);
 
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [baseMap, setBaseMap] = useState<'roadmap' | 'satellite'>('satellite');
   const [use3D, setUse3D] = useState(true);
   const [showMarkers, setShowMarkers] = useState(true);
@@ -779,11 +781,12 @@ export default function MapPage() {
                 variant="secondary"
                 size="sm"
                 className={
-                  'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
+                  'relative h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'
                 }
                 aria-label={`Mijn locatie`}
               >
                 <User className="w-4 h-4" />
+                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.06)]" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Mijn locatie</TooltipContent>
@@ -798,9 +801,10 @@ export default function MapPage() {
           m.setPosition(pos as any);
           return;
         }
-        const adv = userMarkerRef.current as google.maps.marker.AdvancedMarkerElement & {
-          position?: LatLng;
-        };
+        const adv =
+          userMarkerRef.current as google.maps.marker.AdvancedMarkerElement & {
+            position?: LatLng;
+          };
         if (adv && 'position' in adv) {
           (adv as any).position = pos;
           return;
@@ -875,6 +879,9 @@ export default function MapPage() {
       const bodyH = 8;
       const bodyX = headCx - bodyW / 2;
       const bodyY = headCy + 3;
+      const badgeR = 4;
+      const cx = size - badgeR - 2;
+      const cy = badgeR + 2;
       const glyph = `
         <circle cx='${headCx}' cy='${headCy}' r='${headR}' fill='#111827' />
         <rect x='${bodyX}' y='${bodyY}' rx='3' ry='3' width='${bodyW}' height='${bodyH}' fill='#111827' />
@@ -882,9 +889,10 @@ export default function MapPage() {
       const svg = `<?xml version='1.0'?>
         <svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>
           <rect x='0.5' y='0.5' rx='${radius}' ry='${radius}' width='${
-            size - 1
-          }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
+        size - 1
+      }' height='${size - 1}' fill='${bg}' stroke='${border}'/>
           ${glyph}
+      <circle cx='${cx}' cy='${cy}' r='${badgeR}' fill='#ef4444' stroke='#ffffff' stroke-width='1.5' />
         </svg>`;
       const url = 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
       const marker = new google.maps.Marker({
@@ -899,14 +907,50 @@ export default function MapPage() {
       });
       userMarkerRef.current = marker;
     }
+    requestLocationRef.current = () => {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (p) => {
+            createOrUpdateUserMarker({
+              lat: p.coords.latitude,
+              lng: p.coords.longitude,
+            });
+            setLocationError(null);
+          },
+          (e) => {
+            const msg =
+              e && typeof e === 'object' && 'code' in e
+                ? (e as GeolocationPositionError).code === 1
+                  ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
+                  : (e as GeolocationPositionError).code === 2
+                  ? 'Locatie niet beschikbaar.'
+                  : 'Locatie aanvraag verlopen.'
+                : 'Kon locatie niet ophalen.';
+            setLocationError(msg);
+          },
+          { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+        );
+      } catch {}
+    };
     const watchId = navigator.geolocation.watchPosition(
       (p) => {
         createOrUpdateUserMarker({
           lat: p.coords.latitude,
           lng: p.coords.longitude,
         });
+        if (locationError) setLocationError(null);
       },
-      () => {},
+      (e) => {
+        const msg =
+          e && typeof e === 'object' && 'code' in e
+            ? (e as GeolocationPositionError).code === 1
+              ? 'Locatie geblokkeerd. Sta locatie toe in je browser en probeer opnieuw.'
+              : (e as GeolocationPositionError).code === 2
+              ? 'Locatie niet beschikbaar.'
+              : 'Locatie aanvraag verlopen.'
+            : 'Kon locatie niet ophalen.';
+        setLocationError(msg);
+      },
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 }
     );
     geoWatchIdRef.current = watchId;
@@ -931,7 +975,7 @@ export default function MapPage() {
       }
       userMarkerContainerRef.current = null;
     };
-  }, [isReady, mapId]);
+  }, [isReady, mapId, locationError]);
 
   useEffect(() => {
     if (!isReady || !mapRef.current) return;
@@ -1561,6 +1605,30 @@ export default function MapPage() {
                     {error}
                   </CardContent>
                 </Card>
+              </div>
+            )}
+            {locationError && (
+              <div className="absolute top-4 right-4 z-20 max-w-[95vw] pointer-events-auto">
+                <div className="bg-card border rounded-xl shadow-sm p-2 flex items-center gap-2">
+                  <span className="text-sm">{locationError}</span>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="h-8 px-3 rounded-lg border-2 border-border"
+                    onClick={() => requestLocationRef.current?.()}
+                  >
+                    Probeer opnieuw
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 rounded-lg"
+                    aria-label="Sluiten"
+                    onClick={() => setLocationError(null)}
+                  >
+                    ✕
+                  </Button>
+                </div>
               </div>
             )}
             <div className="absolute bottom-4 left-4 z-20 max-w-[95vw] pointer-events-auto">
