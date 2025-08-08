@@ -363,15 +363,21 @@ export default function MapPage() {
         const root = createRoot(container);
         markerRootsRef.current.push(root);
         root.render(
-          <Button
-            variant="secondary"
-            size="sm"
-            className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
-            title={item.name}
-            aria-label={`Scouting groep: ${item.name}`}
-          >
-            <Home className="w-4 h-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  aria-label={`Scouting groep: ${item.name}`}
+                >
+                  <Home className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{item.name}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
         markerContainersRef.current[item.id] = container;
         const adv = new google.maps.marker.AdvancedMarkerElement({ position: item.position, map: mapRef.current!, content: container });
@@ -391,15 +397,21 @@ export default function MapPage() {
         const root = createRoot(container);
         markerRootsRef.current.push(root);
         root.render(
-          <Button
-            variant="secondary"
-            size="sm"
-            className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
-            title={item.name}
-            aria-label={`Scouting groep: ${item.name}`}
-          >
-            <Home className="w-4 h-4" />
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className={'h-8 w-8 rounded-md p-0 font-semibold bg-secondary text-secondary-foreground border-2 border-transparent shadow-sm flex items-center justify-center hover:bg-secondary hover:opacity-100 focus-visible:outline-none'}
+                  aria-label={`Scouting groep: ${item.name}`}
+                >
+                  <Home className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{item.name}</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
         markerContainersRef.current[item.id] = container;
         const domMarker = new DomMarker(item.position, container, () => {
@@ -409,7 +421,7 @@ export default function MapPage() {
         domMarker.setMap(mapRef.current!);
         markersRef.current.push(domMarker);
       } else {
-  const marker = new google.maps.Marker({ position: item.position, map: mapRef.current!, title: item.name, icon: buildHouseIcon() });
+  const marker = new google.maps.Marker({ position: item.position, map: mapRef.current!, icon: buildHouseIcon() });
         marker.addListener('click', () => {
           setSelectedMarkerIds((prev) => { if (prev.includes(item.id)) return prev.filter((x) => x !== item.id); if (prev.length < 2) return [...prev, item.id]; return [prev[1], item.id]; });
           openPopupRef.current?.(item);
